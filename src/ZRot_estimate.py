@@ -3,7 +3,8 @@
 """
 @author: nicolina
 
-Goal: return angle in z-axis in degrees
+Goal:   return angle in z-axis in degrees
+
 Input:  canny_img:          Canny transformation of current frame
         img:                Original frame
         u_trackmiddle:      U-coordinate of track middle at bottom of frame
