@@ -242,8 +242,7 @@ for i in number_of_images:
             findxzPos = True 
             
             
-            
-        '''find x, z axis estimate of camera'''
+        '''Find x, z axis estimate of camera'''
         #after all estimates have sufficiently often been computed, except x and z position
         if findxzPos and (foundTracks is True):
             foundXZ, straight_track_list, z_position_list, x_position_list = current_image.get_xz_position(image_process, curr_heading, pose_estimates, train_pose_data, heading_list, straight_track_list, z_position_list, x_position_list)

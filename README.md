@@ -1,5 +1,20 @@
-# LROD_extrinsics_estimation
-**<u>Online Estimation of Camera Extrinsics using Map Information</u>**
+# Multi-Frame Extrinsics Estimation
+**<u>Online Extrinsic Camera Calibration from Multiple Frames using Map Information</u>**
+
+The aim is to build upon the previous work done by Nicolina and find new approaches to generate enhanced labels by leveraging information accross multiple keyframes.
+
+**Axis Definitions & Coordinate Systems**
+
+
+| Direction                 | Camera | Train  | Rotation |
+|---------------------------|--------|--------|----------|
+| Longitudinal (forward)    | $+Z_C$ | $+X_T$ | Roll     |
+| Lateral (sideways, right) | $+X_C$ | $+Y_T$ | Pitch    |
+| Vertical (downward)       | $+Y_C$ | $+Z_T$ | Yaw      |
+
+
+
+...
 
 The purpose of this project was to create an algorithm to compute the relative pose between GPS and a monocular, intrinsically-calibrated camera at the front of a track vehicle.  Assuming that the monocular camera and GPS are installed on one rigid body, the extrinsics, once computed, can continuously be
 used until the camera is dismounted from the train. 

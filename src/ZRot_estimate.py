@@ -10,7 +10,9 @@ Input:  canny_img:          Canny transformation of current frame
         u_trackmiddle:      U-coordinate of track middle at bottom of frame
         track_width_pix:    Width of tracks in pixels at bottom of frame
         vanishing_point:    1x2 array with u-, v-coordinates of vanishing point
-        line_info:          List with [difference between middle of frame and middle of tracks, gradient of line1, u coordinates of line1 at bottom of frame, gradient of line2, u coordinates of line2 at bottom of frame]
+        line_info:          List with [difference between middle of frame and middle of tracks,
+                                       gradient of line1, u coordinates of line1 at bottom of frame,
+                                       gradient of line2, u coordinates of line2 at bottom of frame]
         
 Output: z_ang:              rotation angle around z-axis in rad
         img_zrot:           image with lines used for z-angle computation
@@ -53,3 +55,14 @@ def rot_z_estimate(canny_img, img, u_trackmiddle, track_width_pix, vanishing_poi
         z_ang = -z_angle
         
     return z_ang, img_zrot
+
+"""
+Summary:
+Hough transform of canny image, filter lines to those of rail sleepers
+Average gradient of rail sleepers corresponds to the z-rotation estimate
+
+Questions / Errors:
+? Line 36: Counter starts at 1 and not 0, is later used for averaging
+? Line 40: lines[i,0,:] should return rho & theta values, not Cartesian coordinates
+? Line 44: Shouldn't it be: if u1 < u1_along_track and u2 > u2_along_track
+"""

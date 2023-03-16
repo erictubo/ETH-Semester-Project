@@ -30,3 +30,9 @@ def rot_y_estimate(img, K, canny_img, vanishing_point):
         
     return ang_y
     
+"""
+Summary:
+Calculate horizontal pixel (u) difference between vanishing point and image center
+Use field of view to convert pixel difference to angle
+
+"""
