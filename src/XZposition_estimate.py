@@ -44,8 +44,8 @@ from numpy.linalg import inv
 
 
 def xz_estimate(img, curr_heading, pose_estimates, train_pose_data, heading_list, straight_track_list, z_position_list, x_position_list, height_camera, vanishing_point, image_nr, path, path_poses, K, elevation, H_w_cam, H_gps_w):
-    path_elevationdata = '/home/nicolina/catkin_ws/src/semester_thesis/bagfiles/'
-    data = pd.read_csv('/home/nicolina/catkin_ws/src/semester_thesis/bagfiles/full_track.csv') #location of file with pole locations in world coordinates
+    path_elevationdata = '/Users/eric/Developer/Cam2GPS/elevation/'
+    data = pd.read_csv('/Users/eric/Developer/Cam2GPS/full_track.csv') #location of file with pole locations in world coordinates
 
     z_pos = None
     x_pos = None
@@ -187,7 +187,7 @@ def xz_estimate(img, curr_heading, pose_estimates, train_pose_data, heading_list
                         file = open(str(local_file_path+ '/' + file_name +'.xyz'), 'r')
                         diff_position = math.inf
                         for line in file:
-                            split_string = line.split()
+                            split_string = line.split(",")
                             x_curr = split_string[0]
                             y_curr = split_string[1]
                             curr_difference = np.sqrt((x_pole_world - float(x_curr))**2 + (y_pole_world - float(y_curr))**2)

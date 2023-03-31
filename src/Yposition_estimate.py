@@ -35,7 +35,7 @@ def y_estimate(img, canny_img, track_width_pix, K, ang_x, nr_img, path_poses, H_
     pitch = -ang_x
     track_width = 1.435     #standard width of train tracks in metres
     focal_length_y = K[1][1]
-    path_elevationdata = '/home/nicolina/catkin_ws/src/semester_thesis/bagfiles/'
+    path_elevationdata = str('/Users/eric/Developer/Cam2GPS/elevation/')
     
     #compute height of camera with width of detected railway tracks
     r = track_width * focal_length_y/ track_width_pix
@@ -71,7 +71,7 @@ def y_estimate(img, canny_img, track_width_pix, K, ang_x, nr_img, path_poses, H_
     file = open(str(local_file_path+ '/' + file_name +'.xyz'), 'r')
     diff_position = math.inf
     for line in file:
-        split_string = line.split()
+        split_string = line.split(",")
         x_curr = split_string[0]
         y_curr = split_string[1]
         curr_difference = np.sqrt((x_gps - float(x_curr))**2 + (y_gps - float(y_curr))**2)
@@ -87,23 +87,9 @@ def y_estimate(img, canny_img, track_width_pix, K, ang_x, nr_img, path_poses, H_
     return y_pos, height_camera, height_gps, elevation
 
 
+"""
+Summary:
+Computes height of camera from track pixel width
+Uses elevation data to compute height offset
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+"""

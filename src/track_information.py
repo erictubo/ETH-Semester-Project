@@ -32,7 +32,7 @@ def get_track_information(canny_img, img):
     foundTrack = False
     track_width_pix = 0
     
-    isImgVisualization = False                                                  #set to "True" to see lines chosen for vanishing point detection
+    isImgVisualization = True                                                  #set to "True" to see lines chosen for vanishing point detection
     
     #detect lines in image
     lines = cv2.HoughLinesP(canny_img, 1, np.pi/180, 100, None, minLineLength=120, maxLineGap=6)
@@ -44,7 +44,7 @@ def get_track_information(canny_img, img):
             [u_cand_left, v_cand_left, u_cand_left2, v_cand_left2] = valid_line_list[0, :]
             [u_cand_right, v_cand_right, u_cand_right2, v_cand_right2] = valid_line_list[1, :]
             
-            grad_left= (v_cand_left - v_cand_left2)/(u_cand_left - u_cand_left2)
+            grad_left = (v_cand_left - v_cand_left2)/(u_cand_left - u_cand_left2)
             grad_right = (v_cand_right - v_cand_right2)/(u_cand_right - u_cand_right2)
             track_width_pix = abs(u_cand_right - u_cand_left)
             
@@ -57,7 +57,7 @@ def get_track_information(canny_img, img):
                 diff_heading_middle_track_pix = u_framemiddle - u_trackmiddle
                 diff_heading_middle_track = diff_heading_middle_track_pix * k_u1                                      #difference of frame middle to track middle in meters
                 v_topframe = (v_cand_left2 + v_cand_right2)/2
-                line_info = [diff_heading_middle_track_pix, grad_left, u_cand_left, grad_right, u_cand_right] 
+                line_info = [diff_heading_middle_track_pix, grad_left, u_cand_left, grad_right, u_cand_right]
 
                 if isImgVisualization:
                     cv2.line(img_copy, (round(u_cand_left), img_copy.shape[0]), (round(u_cand_left2), round(v_cand_left2)), (0,165,255), 4)
@@ -66,5 +66,5 @@ def get_track_information(canny_img, img):
                     cv2.line(img_copy, (round(u_framemiddle), img_copy.shape[0]), (round(u_framemiddle), 1900),(255, 0, 0), 20)
                     cv2.line(img_copy, (round(u_trackmiddle), img_copy.shape[0]), (round(u_toptrack_middle), round(v_topframe)),(0, 0, 255), 3)
                     
-         
+                    
     return foundTrack, line_info, img_copy, track_width_pix, u_trackmiddle

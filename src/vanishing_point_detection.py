@@ -22,7 +22,7 @@ def get_vanishing_point(img, line_info, K, canny_img):
     img_copy = np.copy(img)
     [u_pos_pixel, grad1, u_coord1, grad2, u_coord2] = line_info
     img_height = img_copy.shape[0]
-    isImgVisualization = False                      # set to "True" to see lines chosen for vanishing point detection
+    isImgVisualization = True                      # set to "True" to see lines chosen for vanishing point detection
     threshold = 15
     
     #find intersect of train tracks and determine prior vanishing point

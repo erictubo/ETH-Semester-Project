@@ -3,13 +3,13 @@
 """
 @author: Nicolina Spiegelhalter 
 E-mail: spiegeln@ethz.ch
-
 """
 
 import cv2
 import math
 import yaml
 import numpy as np
+
 from vanishing_point_detection import get_vanishing_point as VanPoint
 from track_information import get_track_information as TrackDet
 from Yposition_estimate import y_estimate as YPos
@@ -18,7 +18,7 @@ from XRot_estimate import rot_x_estimate as XRot
 from YRot_estimate import rot_y_estimate as YRot
 from ZRot_estimate import rot_z_estimate as ZRot
 from transformation_matrices import get_hom_transformation_matrices as TransMat
-from matplotlib import image as plt
+
 
 #class for each image frame with its attributes
 class ImageAttributes:
@@ -41,8 +41,11 @@ class ImageAttributes:
         self.H_gps_cam: np.ndarray[float]
         
     def get_path(self):
-        self.path = str('/home/nicolina/catkin_ws/src/semester_thesis/bagfiles/bas_usb' + str(self.camera_nr) + '/images/')
-        self.path_poses = str('/home/nicolina/catkin_ws/src/semester_thesis/bagfiles/bas_usb' + str(self.camera_nr) + '/poses/')
+        self.path       = str('/Users/eric/Developer/Cam2GPS/images/')
+        self.path_poses = str('/Users/eric/Developer/Cam2GPS/poses/')
+
+        # self.path = str('/home/nicolina/catkin_ws/src/semester_thesis/bagfiles/bas_usb' + str(self.camera_nr) + '/images/')
+        # self.path_poses = str('/home/nicolina/catkin_ws/src/semester_thesis/bagfiles/bas_usb' + str(self.camera_nr) + '/poses/')
     
     def get_image_paths(self):
         nr_string = str(self.image_nr).replace('.0', '')
@@ -131,28 +134,33 @@ K = np.array([[698.8258566937119*2, 0, 492.9705850660823*2],
     
 camera_nr = 0
 
-if camera_nr == 0:
-    start = 500
-    end = 1200
-    
-if camera_nr == 1 :
-    start = 515
-    end = 1200
-    
-number_of_images = np.linspace(start, end, num = (end-start+1))
+start = 0
+end   = 100
 
-for i in number_of_images:
-    print(i)
+# if camera_nr == 0:
+#     start = 500
+#     end = 1200
+    
+# if camera_nr == 1 :
+#     start = 515
+#     end = 1200
+    
+image_numbers = np.linspace(start, end, num = (end-start+1))
+
+for i in image_numbers:
+    i = int(i)
+    print("Image Number: ", i)
     current_image = ImageAttributes(i, camera_nr, K)
     current_image.get_path()
     total_image_path, total_pose_path, image_path = current_image.get_image_paths()
-    current_image.img = plt.imread(total_image_path)
+    current_image.img = cv2.imread(total_image_path)
     
     #get train pose from GPS data
     with open(total_pose_path, 'r') as stream:
         train_pose_data = yaml.safe_load(stream)
         
-    if math.isnan(train_pose_data["heading"]) is False: # in case standing still
+    if not math.isnan(train_pose_data["heading"]): # in case standing still
+        print("  Heading")
         curr_heading = train_pose_data["heading"]
         heading_list.append(curr_heading)
         straight_track_list.append(True)
@@ -168,14 +176,20 @@ for i in number_of_images:
 
         '''find Tracks'''
         foundTracks, img_with_rails = current_image.get_tracks(canny_img, image_process)
+
+        cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/" + (3-len(str(i)))*"0"+str(i) + "_tracks.jpg", img_with_rails)
              
         
         '''find vanishing point '''
-        if foundTracks is True:
+        if foundTracks:
+            print("  Vanishing Point")
             img_vanish = current_image.get_vanishing_point(image_process, canny_img)
+
+            cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/" + (3-len(str(i)))*"0"+str(i) + "_vanishing_point.jpg", img_vanish)
     
     
-        if findxRot and (foundTracks is True):
+        if findxRot and foundTracks:
+            print(  "X-Rotation")
             '''find rotation z-axis estimate of camera'''
             ang_x = current_image.get_xrotation(image_process, canny_img)
             if ang_x != None:
@@ -187,7 +201,8 @@ for i in number_of_images:
             ang_x = None
         
         
-        if findyRot and (foundTracks is True):
+        if findyRot and foundTracks:
+            print(  "Y-Rotation")
             '''find y rotation estimate of camera'''
             ang_y = current_image.get_yrotation(image_process, canny_img)
             if ang_y != None:
@@ -198,7 +213,8 @@ for i in number_of_images:
             ang_y = None
             
             
-        if findyPos and (foundTracks is True):
+        if findyPos and foundTracks:
+            print(  "Y-Position")
             '''find y axis estimate of camera'''
             current_image.get_transformation_matrices(pose_estimates)
             y_pos = current_image.get_yposition(image_process, canny_img, x_angle)
@@ -206,7 +222,8 @@ for i in number_of_images:
                 counter_ypos += 1
             
             
-        if findzRot and (foundTracks is True):
+        if findzRot and foundTracks:
+            print(  "Z-Rotation")
             '''find rotation z-axis estimate of camera'''
             ang_z,img_rotz = current_image.get_zrotation(canny_img, image_process)
             if ang_z != None:
@@ -214,6 +231,8 @@ for i in number_of_images:
                 
             if counter_zang == threshold_z_rot+1:
                 findzRot = False
+
+            cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/" + (3-len(str(i)))*"0"+str(i) + "_sleepers.jpg", img_rotz)
                 
         
         '''Collect parameter estimates '''
@@ -244,7 +263,8 @@ for i in number_of_images:
             
         '''Find x, z axis estimate of camera'''
         #after all estimates have sufficiently often been computed, except x and z position
-        if findxzPos and (foundTracks is True):
+        if findxzPos and foundTracks:
+            print(  "XZ-Position")
             foundXZ, straight_track_list, z_position_list, x_position_list = current_image.get_xz_position(image_process, curr_heading, pose_estimates, train_pose_data, heading_list, straight_track_list, z_position_list, x_position_list)
             if foundXZ is True:
                 counter_xzpos += 1

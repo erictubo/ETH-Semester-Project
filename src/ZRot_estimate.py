@@ -49,7 +49,6 @@ def rot_z_estimate(canny_img, img, u_trackmiddle, track_width_pix, vanishing_poi
                         if isImgVisualization:
                             cv2.line(img_zrot, (u1, v1), (u2, v2), (225, 0, 0), 4)
                                 
-                                
     if counter > 1:
         z_angle = ang_counter/counter
         z_ang = -z_angle

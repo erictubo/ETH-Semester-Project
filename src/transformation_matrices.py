@@ -13,7 +13,7 @@ Input:
 Output:
     H_w_cam:        Homogeneous transformation from world into camera frame
     H_gps_w:        Homogeneous transformation from world into gps frame
-    H_gps_cam:   Homogeneous transformation from gps into camera
+    H_gps_cam:      Homogeneous transformation from gps into camera
 """
 
 import yaml
@@ -25,9 +25,9 @@ def get_hom_transformation_matrices(pose_estimates, nr_image, camera_nr):
     [x_pos, y_pos, z_pos, ang_x, ang_y, ang_z] = pose_estimates
     
     if camera_nr == 0:
-        path_poses = '/home/nicolina/catkin_ws/src/semester_thesis/bagfiles/bas_usb0/poses/'
+        path_poses = str('/Users/eric/Developer/Cam2GPS/poses/')
     else:
-        path_poses = '/home/nicolina/catkin_ws/src/semester_thesis/bagfiles/bas_usb1/poses/'   
+        path_poses = str('/Users/eric/Developer/Cam2GPS/poses/')  
 
     nr_string = str(nr_image).replace('.0', '')
     if len(nr_string) < 6:
