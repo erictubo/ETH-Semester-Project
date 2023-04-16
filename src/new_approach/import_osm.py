@@ -98,7 +98,7 @@ class railway_map:
         self.nodes_to_segment_assignment = []           # Assignment list of which nodes belong to which tracks
         self.segment_to_node_assignment = []            # Assignment of which tracks connect to a node
         self.direct_neighbours_of_nodes = []            # Which nodes are directly connected to each other
-        self.edge_to_edge_connectivits = []             # Whih tracks are directly connected to each other
+        self.edge_to_edge_connectivits = []             # Which tracks are directly connected to each other
         self.railway_tracks = []                        # Acutal list of tracks
         self.railway_nodes = []                         # Actual list of nodes
         self.transition_length = 0                      # Length of a transition segment (actual half length, length per track that is connected)
@@ -157,7 +157,7 @@ class railway_map:
                 'center': {'lat': 47.367, 'lon': 8.54},
                 'zoom': 10})
 
-        #map_fig.show()
+        map_fig.show()
 
 
 
@@ -949,7 +949,7 @@ class railway_map:
 
         # Ignore elements with these keys
         # Ignore 'rail' when dealing with tram, and vice versa
-        railway_types_to_ignore = ['tram', 'disused','abandoned','construction', 'tram_stop', 'preserved', 'station', 'subway_entrance', 'halt', 'platform','miniature','turntable','traverser', 'monorail', 'narrow_gauge', 'crossing', 'level_crossing', 'buffer_stop', 'signal', 'proposed']
+        railway_types_to_ignore = ['rail', 'disused','abandoned','construction', 'preserved', 'station', 'subway_entrance', 'halt', 'platform','miniature','turntable','traverser', 'monorail', 'narrow_gauge', 'crossing', 'level_crossing', 'buffer_stop', 'signal', 'proposed']
         # Parse xml tree
         tree = ET.parse(self.file)
         print("File parsed...")
@@ -1536,7 +1536,7 @@ def find_close_by_segments(map,x,y,radius):
                 already_perpendicular.append(True)
             else:
                 already_perpendicular.append(False)
-    return close_by_segments, distance,already_perpendicular
+    return close_by_segments, distance, already_perpendicular
 
 def distance_to_segment(map,segment_id,x,y):
     min_distance = 100000

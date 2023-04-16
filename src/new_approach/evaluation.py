@@ -22,10 +22,17 @@ class Evaluation:
         return distance
 
     @staticmethod
-    def reprojection_error(Camera: Camera, H_cam_a, P_a, detected_pixel: np.ndarray):
+    def reprojection_error(Camera: Camera, H_cam_a: np.ndarray, P_a: np.ndarray, detected_pixel: np.ndarray):
         """
         Output: distance in pixels between detected and reprojected point
         """
         projected_pixel = Transformation.point_to_pixel(Camera, H_cam_a, P_a)
-        return Evaluation.pixel_distance(detected_pixel, projected_pixel)
+        error = Evaluation.pixel_distance(detected_pixel, projected_pixel)
+        return error
     
+    @staticmethod
+    def average_reprojection_error(Camera: Camera, H_cam_a: np.ndarray, Ps_a: list[np.ndarray], detected_pixels: list[np.ndarray]):
+        for i in range(len(detected_pixels)):
+            error = Evaluation.reprojection_error(Camera, H_cam_a, Ps_a[i], detected_pixels[i])
+        average_error = error/len(detected_pixels)
+        return average_error

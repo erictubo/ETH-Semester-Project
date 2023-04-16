@@ -44,6 +44,9 @@ from numpy.linalg import inv
 
 
 def xz_estimate(img, curr_heading, pose_estimates, train_pose_data, heading_list, straight_track_list, z_position_list, x_position_list, height_camera, vanishing_point, image_nr, path, path_poses, K, elevation, H_w_cam, H_gps_w):
+    isImgVisualization = True
+    image_pole = img 
+    
     path_elevationdata = '/Users/eric/Developer/Cam2GPS/elevation/'
     data = pd.read_csv('/Users/eric/Developer/Cam2GPS/full_track.csv') #location of file with pole locations in world coordinates
 
@@ -227,6 +230,9 @@ def xz_estimate(img, curr_heading, pose_estimates, train_pose_data, heading_list
                                 z_position_list.append(z_pos)
                                 foundXZ = True
     
+                    # visualise highest and lowest pixel of pole, connect as line
+                    image_pole = cv2.line(image_pole, (lowest_pixel[1], lowest_pixel[0]), (highest_pixel[1], highest_pixel[0]), (225, 0, 0), 4)
+                
     else:
         straight_track_list.append(False) 
     
@@ -236,4 +242,4 @@ def xz_estimate(img, curr_heading, pose_estimates, train_pose_data, heading_list
         if abs(curr_heading - beginning_heading) - abs(prev_heading - beginning_heading) < 0.4 and straight_track_list[-1] == False:
             heading_list = [curr_heading]  
             
-    return foundXZ, straight_track_list, z_position_list, x_position_list
+    return foundXZ, straight_track_list, z_position_list, x_position_list, image_pole

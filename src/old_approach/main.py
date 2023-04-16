@@ -88,8 +88,8 @@ class ImageAttributes:
     
     def get_xz_position(self, image_process, curr_heading, pose_estimates, train_pose_data, heading_list, straight_track_list, z_position_list, x_position_list):
         self.H_w_cam, self.H_gps_w, self.H_gps_cam = TransMat(pose_estimates, self.image_nr, self.camera_nr)
-        foundXZ, straight_track_list, z_position_list, x_position_list = XZPos(image_process, curr_heading, pose_estimates, train_pose_data, heading_list, straight_track_list, z_position_list, x_position_list, self.height_camera, self.vanishing_point,self.image_nr, self.path, self.path_poses, self.K, self.elevation, self.H_w_cam, self.H_gps_w)
-        return foundXZ, straight_track_list, z_position_list, x_position_list
+        foundXZ, straight_track_list, z_position_list, x_position_list, image_pole = XZPos(image_process, curr_heading, pose_estimates, train_pose_data, heading_list, straight_track_list, z_position_list, x_position_list, self.height_camera, self.vanishing_point,self.image_nr, self.path, self.path_poses, self.K, self.elevation, self.H_w_cam, self.H_gps_w)
+        return foundXZ, straight_track_list, z_position_list, x_position_list, image_pole
         
 
 '''booleans for order of estimates'''
@@ -135,7 +135,7 @@ K = np.array([[698.8258566937119*2, 0, 492.9705850660823*2],
 camera_nr = 0
 
 start = 0
-end   = 100
+end   = 500
 
 # if camera_nr == 0:
 #     start = 500
@@ -177,7 +177,7 @@ for i in image_numbers:
         '''find Tracks'''
         foundTracks, img_with_rails = current_image.get_tracks(canny_img, image_process)
 
-        cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/" + (3-len(str(i)))*"0"+str(i) + "_tracks.jpg", img_with_rails)
+        cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/features/" + (3-len(str(i)))*"0"+str(i) + "_tracks.jpg", img_with_rails)
              
         
         '''find vanishing point '''
@@ -185,7 +185,7 @@ for i in image_numbers:
             print("  Vanishing Point")
             img_vanish = current_image.get_vanishing_point(image_process, canny_img)
 
-            cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/" + (3-len(str(i)))*"0"+str(i) + "_vanishing_point.jpg", img_vanish)
+            cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/features/" + (3-len(str(i)))*"0"+str(i) + "_vanishing_point.jpg", img_vanish)
     
     
         if findxRot and foundTracks:
@@ -232,7 +232,7 @@ for i in image_numbers:
             if counter_zang == threshold_z_rot+1:
                 findzRot = False
 
-            cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/" + (3-len(str(i)))*"0"+str(i) + "_sleepers.jpg", img_rotz)
+            cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/features/" + (3-len(str(i)))*"0"+str(i) + "_sleepers.jpg", img_rotz)
                 
         
         '''Collect parameter estimates '''
@@ -265,9 +265,13 @@ for i in image_numbers:
         #after all estimates have sufficiently often been computed, except x and z position
         if findxzPos and foundTracks:
             print(  "XZ-Position")
-            foundXZ, straight_track_list, z_position_list, x_position_list = current_image.get_xz_position(image_process, curr_heading, pose_estimates, train_pose_data, heading_list, straight_track_list, z_position_list, x_position_list)
+            foundXZ, straight_track_list, z_position_list, x_position_list, image_pole = current_image.get_xz_position(image_process, curr_heading, pose_estimates, train_pose_data, heading_list, straight_track_list, z_position_list, x_position_list)
             if foundXZ is True:
                 counter_xzpos += 1
+
+            print(str(counter_xzpos) + "/" + str(threshold_xz_pos))
+
+            cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/features/" + (3-len(str(i)))*"0"+str(i) + "_pole.jpg", image_pole)
 
         if counter_xzpos >= threshold_xz_pos:
             z_position = np.median(z_position_list)
@@ -276,8 +280,11 @@ for i in image_numbers:
             pose_estimates[0] = x_position
             _, _, H_gps_cam = TransMat(pose_estimates, i, camera_nr)
             print('Found the pose between the GPS and the camera')
+            print(H_gps_cam)
             break
-
+        
+        print("Pose estimates: ", pose_estimates)
+        print("Transformation matrix: ", TransMat(pose_estimates, i, camera_nr))
 
                     
 
