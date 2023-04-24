@@ -31,6 +31,22 @@ class Evaluation:
         return error
     
     @staticmethod
+    def reprojection_errors(Camera: Camera, H_cam_a: np.ndarray, Ps_a: list[np.ndarray], detected_pixels: list[np.ndarray]):
+
+        assert len(Ps_a) == len(detected_pixels)
+        errors: list[float] = []
+        for detected_pixel, P_a in detected_pixels, Ps_a:
+            error = Evaluation.reprojection_error(Camera, H_cam_a, P_a, detected_pixel)
+            errors.append(error)
+        return errors
+
+
+    # Reprojection error to closest pixel
+
+    # Pass each track through function
+
+    
+    @staticmethod
     def average_reprojection_error(Camera: Camera, H_cam_a: np.ndarray, Ps_a: list[np.ndarray], detected_pixels: list[np.ndarray]):
         for i in range(len(detected_pixels)):
             error = Evaluation.reprojection_error(Camera, H_cam_a, Ps_a[i], detected_pixels[i])

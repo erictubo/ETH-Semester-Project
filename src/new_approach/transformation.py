@@ -3,6 +3,7 @@
 
 import numpy as np
 from scipy.spatial.transform import Rotation
+from scipy.interpolate import splprep, splev, CubicSpline
 
 from camera import Camera
 
@@ -133,7 +134,9 @@ class Transformation:
         """
         assert Camera.K.shape == (3,3)
         assert P_cam.shape[0] == 3, P_cam.shape
-
+        if P_cam[2] < 0:
+            # print("Camera point", str(P_cam.transpose()), "ignored since behind camera")
+            return
         pixel_lam = Camera.K @ P_cam
         pixel = np.round(pixel_lam[0:2,:] / pixel_lam[2,:])
         assert pixel.shape[0] == 2, pixel.shape
@@ -148,7 +151,9 @@ class Transformation:
         pixels = []
         for P_cam in Ps_cam:
             pixel = Transformation.project_camera_point_to_pixel(Camera, P_cam)
-            pixels.append(pixel)
+            if type(pixel) == np.ndarray:
+                pixels.append(pixel)
+        print(len(pixels), "/", len(Ps_cam), "points in front of camera")
         return pixels
 
 
@@ -173,3 +178,84 @@ class Transformation:
         Ps_cam = Transformation.transform_points(H_cam_a, Ps_a)
         pixels = Transformation.project_camera_points_to_pixels(Camera, Ps_cam)
         return pixels
+
+
+    @staticmethod
+    def convert_points_to_XYZ(points: list[np.ndarray]):
+        X = np.zeros(len(points))
+        Y = np.zeros(len(points))
+        Z = np.zeros(len(points))
+        for i, point in enumerate(points):
+            assert point.shape[0] == 3
+            X[i], Y[i], Z[i] = point[0], point[1], point[2]
+        return X, Y, Z
+    
+    @staticmethod
+    def convert_XYZ_to_points(X: np.ndarray, Y: np.ndarray, Z: np.ndarray):
+        points: list[np.ndarray] = []
+        for i in range(X.shape[0]):
+            point = np.array([[X[i]], [Y[i]], [Z[i]]])
+            points.append(point)
+        return points
+
+
+    @staticmethod
+    def interpolate_3D_spline(points: list[np.ndarray], factor=3):
+
+        X, Y, Z = Transformation.convert_points_to_XYZ(points)
+
+        W = np.ones_like(X)
+        W[0] = 4
+        W[-1] = 4
+
+        tck, u = splprep(x=[X, Y, Z], w=W, s=0.1)
+
+        new_u = np.linspace(0, 1, factor * len(u))
+
+        new_XYZ = splev(new_u, tck)
+        
+        new_X = new_XYZ[0]
+        new_Y = new_XYZ[1]
+        new_Z = new_XYZ[2]
+
+        print("3D spline:", len(X), "->", len(new_X), "interpolated points")
+
+        new_points = Transformation.convert_XYZ_to_points(new_X, new_Y, new_Z)
+
+        return new_points
+    
+
+    @staticmethod
+    def convert_pixels_to_UV(pixels: list[np.ndarray]):
+        U = np.zeros(len(pixels))
+        V = np.zeros(len(pixels))
+        for i, pixel in enumerate(pixels):
+            assert pixel.shape[0] == 2, pixel.shape
+            U[i] = pixel[0]
+            V[i] = pixel[1]
+        return U, V
+    
+    @staticmethod
+    def convert_UV_to_pixels(U: np.ndarray, V: np.ndarray):
+        pixels: list[np.ndarray] = []
+        for i in range(U.shape[0]):
+            pixel = np.array([[U[i]], [V[i]]])
+            pixels.append(pixel)
+        return pixels
+
+
+    @staticmethod
+    def interpolate_2D_spline(pixels: list[np.ndarray], factor=3):
+
+        U, V = Transformation.convert_pixels_to_UV(pixels)
+
+        tck, params = splprep([U, V])
+
+        new_params = np.linspace(0, 1, factor * len(params))
+
+        new_U, new_V = splev(new_params, tck)
+
+        print("2D spline:", len(U), "->", len(new_U), "interpolated points")
+
+        new_pixels = Transformation.convert_UV_to_pixels(new_U, new_V)
+        return new_pixels
