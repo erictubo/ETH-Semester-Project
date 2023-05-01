@@ -39,6 +39,8 @@ class track_segment:
         self.is_transition = False          # Transition segment or not
         self.transitions = []               # Transition Regions
 
+        self.is_bridge = False
+
 
     def print(self):
         print("---")
@@ -962,6 +964,7 @@ class railway_map:
                 if (node.tag != 'nd') and (node.tag != 'tag'):
                     print("Some unexpected nodes showed up:", node.tag)
             is_railway = False
+            is_bridge = False
             max_speed = 0
             type = ''
             num_tracks = 1
@@ -979,6 +982,9 @@ class railway_map:
                     if num_tracks > 1:
                         print("WARNING!! INSUFFICITENT TRACK DATA (multiple tracks in one way)")
 
+                if node.attrib['k'] == 'bridge':
+                    is_bridge = True
+
             if is_railway and not type in railway_types_to_ignore:
                 # Storing this as a track in osm_track_id_database
                 osm_way_id = way.attrib['id']
@@ -989,6 +995,7 @@ class railway_map:
                     self.edge_to_edge_connectivits.append([])
                     way_index = self.osm_track_ids.index(osm_way_id)    # assign an index
                     new_track = track_segment(way_index,osm_way_id)     # create track object
+                    new_track.is_bridge = is_bridge
                     new_track.max_speed = max_speed
                     new_track.type = type
                     new_track.num_tracks = num_tracks

@@ -8,15 +8,17 @@ import yaml
 
 from data import path_to_images, path_to_poses
 from camera import Camera
-from image import Image
 from gps import GPS
+from annotations import Annotations
 
 
 class KeyFrame:
-    
     """
-    Class per keyframe with its specific properties \\
-    Initialised for each keyframe = image/pose combination
+    Data Object
+    - .id
+    - .Camera (data object)
+    - .Image (data object)
+    - .GPS (data object)
     """
 
     def __init__(self, id: int, Camera: Camera):
@@ -28,11 +30,13 @@ class KeyFrame:
         self.image = self.__get_image__()
         self.gps_pose = self.__get_gps_pose__()
 
-        # Pose object, which initialises related sub-objects (see pose.py)
+        # GPS object, which initialises related sub-objects (see gps.py)
         self.GPS = GPS(self.gps_pose)
 
         # Image object, which initialises related sub-objects (see image.py)
-        self.Image = Image(self.image)
+        # self.Image = Image(self.image)
+
+        self.Annotations = Annotations(self.image, self.filename)
 
     """
     Data imports for each keyframe

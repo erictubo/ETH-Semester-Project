@@ -1,178 +1,196 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# External Libraries
 import numpy as np
 import cv2
 import random
+import pickle
+import matplotlib.pyplot as plt
 
-from keyframe import KeyFrame
+# Methods & Data
+from data import railway_object_file
 from camera import Camera
-from gps import MapInfo
+from keyframe import KeyFrame
+
+from railway import Railway
 from transformation import Transformation
 from visualisation import Visualisation
 
 
 
-"""
-Camera Parameters
-"""
+""" Camera Parameters """
 Camera_1 = Camera(alpha_u= 698.8258566937119*2, alpha_v= 698.6495855393557*2, u0= 492.9705850660823*2, v0= 293.3927615928415*2)
-# optional: define different cameras with different parameters
+
+""" Keyframes """
+def create_keyframes(ids):
+    print("Creating keyframes")
+    keyframes: list[KeyFrame] = []
+    for id in ids:
+        id = int(id)
+        keyframe = KeyFrame(id, Camera_1)
+        if keyframe.GPS.is_missing_data:
+            # print("Keyframe #", id, "missing data >> skipped")
+            np.delete(ids, np.where(ids == id))
+            continue
+        # print("Keyframe #", id)
+        keyframes.append(keyframe)
+    return keyframes
+
+
+ids = np.arange(0, 1928, 25)
+keyframes = create_keyframes(ids)
+
+"""
+Pre-processing of relevant railway map:
+- fill gaps
+- elevation
+"""
+
+max_gap = 20
+r_ahead = 100
+r_behind = 50
+
+
+create_railway = input("Create a new railway object? [y/n]: ")
+if create_railway == 'y':
+
+    railway = Railway(keyframes, max_gap=max_gap, r_ahead=r_ahead, r_behind=r_behind)
+
+    with open(railway_object_file, 'wb') as file:
+        pickle.dump(railway, file)
+        print("Railway object sucessfully saved to file.")
+
+else:
+    print("Loading railway object from file")
+    with open(railway_object_file, 'rb') as file:
+        railway = pickle.load(file)
+
+
+plot_railway_2D = True
+plot_railway_3D = False
+
+if plot_railway_2D:
+    for track in railway.tracks:
+        for point in railway.points_in_tracks_2D[track]:
+            Visualisation.plot_XY(point[0], point[1], 'orange')
+    for node in railway.nodes:
+        Visualisation.plot_XY(node.x, node.y, color='red')
+    for keyframe in keyframes:
+        point = keyframe.GPS.t_w_gps
+        Visualisation.plot_XY(point[0], point[1], 'black')
+        #plt.Circle((point[0], point[1]), r_ahead, 'red')
+    Visualisation.show_plot()
+
+if plot_railway_3D:
+    ax = Visualisation.create_3D_plot("All points in tracks")
+    for track in railway.tracks:
+        color = 'blue'
+        if track.is_bridge:
+            color = 'cyan'
+        points = railway.points_in_tracks_3D[track]
+        Visualisation.plot_3D_points(ax, points, color)
+    for keyframe in keyframes:
+        point = keyframe.GPS.t_w_gps
+        Visualisation.plot_3D_points(ax, [point], 'red')
+    Visualisation.show_plot()
+
+
+# Camera frame in GPS frame
+R_gps_camf = np.array([[0, 0, 1], [-1, 0, 0], [0, -1, 0]])
+t_gps_camf = np.array([[0],[0],[0]])                                    
+H_gps_camf = Transformation.compile_H_matrix(R_gps_camf, t_gps_camf)
 
 
 """
-Main Loop
+Offset: initial guess
 """
 
-n_segments = {}
-n_nodes = {}
+offset_camf_cam = [0, -1.70, 0]
+angles_camf_cam = [-0.00, -0.01, 0.0]
 
-ids = np.arange(6, 1928, 50)
+# Median estimates from report:
+# Camera 1
+# offset_camf_cam = [1.28, -1.05, 0.04]
+# angles_camf_cam = [-0.31, -0.48, 0.0]
+# Camera 2
+# offset_camf_cam = [0.97, -0.99, 0.48]
+# angles_camf_cam = [0.73, 1.57, 0.0]
+
+# Camera in camera frame
+t_camf_cam = np.array(offset_camf_cam).transpose()
+R_camf_cam = Transformation.convert_euler_angles(angles_camf_cam, to_type="rotation matrix")
+H_camf_cam = Transformation.compile_H_matrix(R_camf_cam, t_camf_cam)
 
 
-for id in ids:
-    id = int(id)
-    print("\nID:", id)
+ids = [325, 450, 600, 775, 1025, 1225, 1650, 1800, 1900]
+keyframes = create_keyframes(ids)
 
-    keyframe = KeyFrame(id, Camera_1)
+for keyframe in keyframes:
 
-    if keyframe.GPS.is_missing_data:
-        print("keyframe missing data >> skipped")
-        np.delete(ids, np.where(ids == id))
-        continue
-
-    # Camera frame in GPS frame
-    R_gps_camf = np.array([[0 ,  0, 1],
-                          [-1,  0, 0],
-                          [0 , -1, 0]])
-    t_gps_camf = np.array([[0],[0],[0]])                                    
-    H_gps_camf = Transformation.compile_H_matrix(R_gps_camf, t_gps_camf)
-
-    # GPS in world frame
     H_w_gps = keyframe.GPS.H_w_gps
-    # World in GPS frame
     H_gps_w = keyframe.GPS.H_gps_w
 
-
-    """
-    Offset calculations ...
-    """
-
-    offset_camf_cam = [0, -1.70, 0]
-    angles_camf_cam = [-0.00, -0.01, 0.0]
-
-    offset_camf_cam = [0, -1.70, 0]
-    angles_camf_cam = [-0.00, -0.01, 0.0]
-
-    # Median estimates from report:
-    # Camera 1
-    # offset_camf_cam = [1.28, -1.05, 0.04]
-    # angles_camf_cam = [-0.31, -0.48, 0.0]
-    # Camera 2
-    # offset_camf_cam = [0.97, -0.99, 0.48]
-    # angles_camf_cam = [0.73, 1.57, 0.0]
-
-    # Camera in camera frame
-    t_camf_cam = np.array(offset_camf_cam).transpose()
-    R_camf_cam = Transformation.convert_euler_angles(angles_camf_cam, to_type="rotation matrix")
-    H_camf_cam = Transformation.compile_H_matrix(R_camf_cam, t_camf_cam)
-
-    # Camera in GPS frame
     H_gps_cam = H_gps_camf @ H_camf_cam
-    # GPS in camera frame 
     H_cam_gps = Transformation.invert_H_matrix(H_gps_cam)
 
-    # Camera in world frame
     H_w_cam = H_w_gps @ H_gps_cam
-    # World in camera frame
     H_cam_w = Transformation.invert_H_matrix(H_w_cam)
 
 
     """
-    Reproject railway nodes
+    Reproject local railway onto image
+    - 3D interpolation
+    - interpolation in image space
     """
-    # points_w = keyframe.GPS.railway_nodes_nearby_w
-    # points_gps = Transformation.transform_points(H_gps_w, points_w)
-    # points_cam = Transformation.transform_points(H_cam_w, points_w)
 
-    visual = keyframe.image
+    reprojected_visual = keyframe.image.copy()
+    
+    local_tracks, local_points_in_tracks = railway.get_local_points_in_tracks(keyframe, r_ahead, r_behind, min_points=2)
 
-    ax = Visualisation.create_3D_plot("GPS points and splines")
+    for track in local_tracks:
 
-    #colors = [(255,255,255), (0,255,0), (255,0,0), (255,255,0), (0, 255, 255), (0, 122, 255)]
-
-    railway_segments = keyframe.GPS.railway_segment_lists
-
-
-    for i, segment in enumerate(railway_segments):
-        print("Segment #", i, ":", str(len(segment)), "nodes")
-
-        nodes_w = MapInfo.convert_railway_nodes_to_world_coordinates(segment)
-        nodes_gps = Transformation.transform_points(H_gps_w, nodes_w)
-
-        # Interpolate spline in 3D
-        if len(segment) > 3:
-            nodes_gps = Transformation.interpolate_3D_spline(nodes_gps)
-            Visualisation.plot_3D_points(ax, nodes_gps)
-
-        nodes_cam = Transformation.transform_points(H_cam_gps, nodes_gps)
-        pixels = Transformation.project_camera_points_to_pixels(keyframe.Camera, nodes_cam)
-
-        # Interpolate spline in 2D
-        if len(pixels) > 3:
-            pixels = Transformation.interpolate_2D_spline(pixels)
-
-        lines_2D = Visualisation.convert_consecutive_pixels_to_2D_lines(pixels)
-
-        color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
-
-        visual = Visualisation.draw_on_image(visual, pixels, lines_2D, color)
+        points_w = local_points_in_tracks[track]
         
+        points_gps = Transformation.transform_points(H_gps_w, points_w)
+
+        points_gps = Transformation.interpolate_spline_linspace(points_gps, desired_spacing=0.05, smoothing=0.1, maximum=False)
+
+        points_cam = Transformation.transform_points(H_cam_gps, points_gps)
+
+        pixels = Transformation.project_camera_points_to_pixels(keyframe.Camera, points_cam)
+
+        if len(pixels) > 2:
+
+            # Remove duplicates
+            unique_pixels = [pixels[0]]
+            for pixel in pixels:
+                if np.linalg.norm(pixel - unique_pixels[-1]) >= 10:
+                    unique_pixels.append(pixel)
+            pixels = unique_pixels
+
+            # lines = Visualisation.convert_consecutive_pixels_to_2D_lines(new_pixels)
+            color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+
+            reprojected_visual = Visualisation.draw_on_image(reprojected_visual, pixels, False, (255, 0, 0))
+
+            original_pixels = Transformation.project_points_to_pixels(Camera_1, H_cam_w, points_w)
+            reprojected_visual = Visualisation.draw_on_image(reprojected_visual, original_pixels, False, (0,0,255))
+
+
+    annotated_visual = reprojected_visual.copy()
+        
+    for spline, pixel_sequence in zip(keyframe.Annotations.splines, keyframe.Annotations.pixel_sequences):
+        annotated_visual = Visualisation.draw_on_image(annotated_visual, spline, False, (255, 255, 0))
+        annotated_visual = Visualisation.draw_on_image(annotated_visual, pixel_sequence, False, (0, 255, 255))
+
+
+    
     
     # Reproject all railway nodes for comparison with splines
-    all_railway_nodes_w = keyframe.GPS.railway_nodes_w
-    all_pixels = Transformation.project_points_to_pixels(keyframe.Camera, H_cam_w, all_railway_nodes_w)
-    visual = Visualisation.draw_on_image(visual, all_pixels, None)
+    # all_railway_nodes_w = keyframe.GPS.railway_nodes_w
+    # all_pixels = Transformation.project_points_to_pixels(keyframe.Camera, H_cam_w, all_railway_nodes_w)
+    # visual = Visualisation.draw_on_image(visual, all_pixels, None)
 
-    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/railway_nodes/" + (3-len(str(id)))*"0"+str(id) + "_railway_tracks.jpg", visual)
-
-    n_segments[id] = len(railway_segments)
-    n_nodes[id] = len(keyframe.GPS.railway_nodes)
-
-    Visualisation.show_3D_plot()
-
-
-
-from data import railway_map
-
-# all_railway_nodes = MapInfo.select_local_railway_nodes(railway_map.railway_nodes, keyframe.GPS.x_w_gps, keyframe.GPS.y_w_gps, keyframe.GPS.heading, 500, 500)
-# print("Total railway nodes:", len(all_railway_nodes))
-# all_railway_nodes_w = MapInfo.convert_railway_nodes_to_world_coordinates(all_railway_nodes)
-# all_railway_nodes_gps = Transformation.transform_points(H_gps_w, all_railway_nodes_w)
-# Visualisation.plot_3D_points(ax, all_railway_nodes_gps)
-# Visualisation.show_3D_plot()
-
-
-print("Summary:")
-
-for id in ids:
-    print("ID", id, "-- local segments:", n_segments[id], "| local nodes:", n_nodes[id])
-
-print("Finished")
-
-
-
-"""
-New Idea:
-
-Loop through keyframes
-- find GPS distances between consecutive keyframes
-- create combined map of nodes
-- collect nodes into tracks
-- interpolate tracks >> regularly spaced nodes
-    - interpolate in 2D map-space and add 3D via elevation data
-
-Loop through keyframes again:
-- select local nodes & tracks
-- interpolate in 2D image space
-"""
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/reprojected splines/" + keyframe.filename + "_reprojection.jpg", reprojected_visual)
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/annotated splines/" + keyframe.filename + "_annotation.jpg", annotated_visual)

@@ -138,7 +138,7 @@ class Transformation:
             # print("Camera point", str(P_cam.transpose()), "ignored since behind camera")
             return
         pixel_lam = Camera.K @ P_cam
-        pixel = np.round(pixel_lam[0:2,:] / pixel_lam[2,:])
+        pixel = np.round(pixel_lam[0:2,:] / pixel_lam[2,:], 1)
         assert pixel.shape[0] == 2, pixel.shape
         return pixel
     
@@ -153,7 +153,7 @@ class Transformation:
             pixel = Transformation.project_camera_point_to_pixel(Camera, P_cam)
             if type(pixel) == np.ndarray:
                 pixels.append(pixel)
-        print(len(pixels), "/", len(Ps_cam), "points in front of camera")
+        # print(len(pixels), "/", len(Ps_cam), "points in front of camera")
         return pixels
 
 
@@ -178,84 +178,169 @@ class Transformation:
         Ps_cam = Transformation.transform_points(H_cam_a, Ps_a)
         pixels = Transformation.project_camera_points_to_pixels(Camera, Ps_cam)
         return pixels
-
+    
 
     @staticmethod
-    def convert_points_to_XYZ(points: list[np.ndarray]):
+    def convert_points_to_coordinate_arrays(points: list[np.ndarray]):
+        """ Converts points (list of numpy vectors) into a separate vector for each coordinate, (X,Y) or (X,Y,Z)"""
+        
+        dim = points[0].shape[0]
+        
         X = np.zeros(len(points))
         Y = np.zeros(len(points))
-        Z = np.zeros(len(points))
         for i, point in enumerate(points):
-            assert point.shape[0] == 3
-            X[i], Y[i], Z[i] = point[0], point[1], point[2]
-        return X, Y, Z
-    
+            X[i] = point[0]
+            Y[i] = point[1]
+        if dim == 2:
+            return (X, Y)
+        elif dim == 3:
+            Z = np.zeros(len(points))
+            for i, point in enumerate(points):
+                Z[i] = point[2]
+            return (X, Y, Z)
+        else: raise TypeError("Input points not of dimension 2 or 3")
+
+
     @staticmethod
-    def convert_XYZ_to_points(X: np.ndarray, Y: np.ndarray, Z: np.ndarray):
+    def convert_coordinate_arrays_to_points(x: tuple[np.ndarray]):
+        """ Converts vectors per coordinate, (X,Y,Z) or (X,Y), into points (list of numpy vectors)"""
         points: list[np.ndarray] = []
-        for i in range(X.shape[0]):
-            point = np.array([[X[i]], [Y[i]], [Z[i]]])
+        for i in range(x[0].shape[0]):
+            if len(x) == 3:
+                point = np.array([[x[0][i]], [x[1][i]], [x[2][i]]])
+            elif len(x) == 2:
+                point = np.array([[x[0][i]], [x[1][i]]])
             points.append(point)
         return points
-
+    
 
     @staticmethod
-    def interpolate_3D_spline(points: list[np.ndarray], factor=3):
+    def interpolate_spline_linspace(points: list[np.ndarray], desired_spacing, smoothing, maximum=False):
 
-        X, Y, Z = Transformation.convert_points_to_XYZ(points)
+        """Spline interpolation for 2D and 3D cases -- matches input dimension."""
 
-        W = np.ones_like(X)
-        W[0] = 4
-        W[-1] = 4
+        assert(len(points)) > 1, print("Provide at least 2 points for interpolation")
 
-        tck, u = splprep(x=[X, Y, Z], w=W, s=0.1)
+        # covered_distance = sum((points[0]-points[-1])**2)**0.5
 
-        new_u = np.linspace(0, 1, factor * len(u))
+        covered_distance = 0
+        for i in range(1, len(points)):
+            covered_distance += np.linalg.norm(points[i]-points[i-1])
 
-        new_XYZ = splev(new_u, tck)
-        
-        new_X = new_XYZ[0]
-        new_Y = new_XYZ[1]
-        new_Z = new_XYZ[2]
+        x = Transformation.convert_points_to_coordinate_arrays(points)
 
-        print("3D spline:", len(X), "->", len(new_X), "interpolated points")
+        # Cubic spline for at least 4 points, linear for 2 or 3 points
+        if len(points) > 3:
+            k = 3
+        elif len(points) > 1:
+            k = 1
 
-        new_points = Transformation.convert_XYZ_to_points(new_X, new_Y, new_Z)
+        w = np.ones_like(x[0])
+        # w[0], w[-1] = 10, 10
+
+        tck, u = splprep(x=x, w=w, s=smoothing, k=k)
+
+        # If interpolated to fewer points than before, keep original points
+        num = 1 + int(covered_distance / desired_spacing)
+        if maximum:
+            num = max(num, len(u))
+
+        new_u = np.linspace(0, 1, num=num)
+
+        (new_x) = splev(new_u, tck)
+
+        new_points = Transformation.convert_coordinate_arrays_to_points(new_x)
+        # print(len(points), "->", len(new_points), "interpolated points")
 
         return new_points
     
 
     @staticmethod
-    def convert_pixels_to_UV(pixels: list[np.ndarray]):
-        U = np.zeros(len(pixels))
-        V = np.zeros(len(pixels))
-        for i, pixel in enumerate(pixels):
-            assert pixel.shape[0] == 2, pixel.shape
-            U[i] = pixel[0]
-            V[i] = pixel[1]
-        return U, V
+    def interpolate_spline_logspace(points: list[np.ndarray], factor, base):
+
+        assert(len(points)) > 1, print("Provide at least 2 points for interpolation")
+
+        # reverse list if last point closer than first point
+
+        if np.linalg.norm(points[0]) > np.linalg.norm(points[-1]):
+            points = points[len(points) - 1::-1]
+
+        x = Transformation.convert_points_to_coordinate_arrays(points)
+
+        if len(points) > 3:
+            k = 3
+        elif len(points) > 1:
+            k = 1
+
+        w = np.ones_like(x[0])
+        w[0], w[-1] = 10, 10
+
+        tck, u = splprep(x=x, w=w, s=0.1, k=k)
+
+        start = points[0]
+        end = points[-1]
+        distance = end[2] - start[2]
+        average = (end[2] + start[2])/2
+
+        # print(start[2], end[2], distance, average)
+
+        new_u = np.logspace(0, 1, num=int(1000*distance/average+2), base=base)
+
+        new_u = (new_u - base**0)/base**1
+
+        # print("\nNew u:", new_u)
+
+        (new_x) = splev(new_u, tck)
+        new_points = Transformation.convert_coordinate_arrays_to_points(new_x)
+
+        return new_points
+
+
+
+
+
+
+
+
+
     
-    @staticmethod
-    def convert_UV_to_pixels(U: np.ndarray, V: np.ndarray):
-        pixels: list[np.ndarray] = []
-        for i in range(U.shape[0]):
-            pixel = np.array([[U[i]], [V[i]]])
-            pixels.append(pixel)
-        return pixels
 
+    # @staticmethod
+    # def interpolate_3D_spline(points: list[np.ndarray], factor):
 
-    @staticmethod
-    def interpolate_2D_spline(pixels: list[np.ndarray], factor=3):
+    #     X, Y, Z = Transformation.convert_points_to_coordinate_arrays(points)
 
-        U, V = Transformation.convert_pixels_to_UV(pixels)
+    #     if len(points) > 3: k = 3
+    #     elif len(points) > 1: k = 1
 
-        tck, params = splprep([U, V])
+    #     w = np.ones_like(X)
 
-        new_params = np.linspace(0, 1, factor * len(params))
+    #     s = 0.1
 
-        new_U, new_V = splev(new_params, tck)
+    #     tck, u = splprep(x=[X, Y, Z], w=w, s=s)
 
-        print("2D spline:", len(U), "->", len(new_U), "interpolated points")
+    #     new_u = np.linspace(0, 1, factor * len(u))
 
-        new_pixels = Transformation.convert_UV_to_pixels(new_U, new_V)
-        return new_pixels
+    #     new_x = splev(new_u, tck)
+
+    #     new_points = Transformation.convert_coordinate_arrays_to_points(new_x)
+    #     return new_points
+    
+
+    # @staticmethod
+    # def interpolate_2D_spline(points: list[np.ndarray], factor: int):
+
+    #     U, V = Transformation.convert_points_to_coordinate_arrays(points)
+
+    #     if len(points) > 3: k = 3
+    #     elif len(points) > 1: k = 1
+
+    #     tck, params = splprep([U, V], s=0.1, k=k)
+
+    #     new_params = np.linspace(0, 1, factor * len(params))
+
+    #     new_U, new_V = splev(new_params, tck)
+
+    #     new_points = Transformation.convert_coordinate_arrays_to_points((new_U, new_V))
+    #     return new_points
+    

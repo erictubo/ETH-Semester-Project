@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# External libraries
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 
+# Data & methods
 from transformation import Transformation
 
 
@@ -39,7 +41,7 @@ class Visualisation:
 
                 cv2.circle(image, (u, v), 5, color, -1)
 
-            print(pixels_in_frame, "/", len(pixels), "pixels inside image")
+            # print(pixels_in_frame, "/", len(pixels), "pixels inside image")
 
         if lines:
             for line in lines:
@@ -87,15 +89,33 @@ class Visualisation:
             assert len(lines) == len(pixels)-1
         return lines
 
+    """
+    2D Plots
+    """
+    @staticmethod
+    def create_2D_plot(title: str):
+        fig = plt.figure(figsize=(5,5))
+        ax = fig.add_subplot(projection='2d')
+        ax.set_title(title)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_aspect('equal')
+        return ax
+    
+
+    @staticmethod
+    def plot_XY(X, Y, color: str='blue', scale = 'equal'):
+        plt.axis('equal')
+        plt.scatter(X, Y, c=color)
+
 
     """
-    3D plots
+    3D Plots
     """
 
 
     @staticmethod
     def create_3D_plot(title: str):
-
         fig = plt.figure(figsize=(5,5))
         ax = fig.add_subplot(projection='3d')
         ax.set_title(title)
@@ -103,12 +123,11 @@ class Visualisation:
         ax.set_ylabel('Y')
         ax.set_zlabel('Z')
         ax.set_aspect('equal')
-
         return ax
 
     @staticmethod
     def plot_3D_points(ax, points: list[np.ndarray], color: str='blue', scale = 'equal'):
-        X, Y, Z = Transformation.convert_points_to_XYZ(points)
+        X, Y, Z = Transformation.convert_points_to_coordinate_arrays(points)
         Visualisation.plot_XYZ(ax, X, Y, Z, color, scale)
 
     @staticmethod
@@ -130,5 +149,5 @@ class Visualisation:
                 ax.plot(line[0,:], line[1,:], line[2,:])
 
     @staticmethod
-    def show_3D_plot():
+    def show_plot():
         plt.show()
