@@ -9,9 +9,6 @@ from scipy.spatial.transform import Rotation
 from transformation import Transformation
 from map_info import MapInfo
 
-# Object types
-from import_osm import track_node as TrackNode, track_segment as TrackSegment
-
 
 class GPS:
 

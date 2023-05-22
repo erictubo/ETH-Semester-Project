@@ -7,16 +7,18 @@ import csv
 #from image import Image
 from data import annotations_file
 from transformation import Transformation
+from camera import Camera
 
 
 class Annotations():
 
-    def __init__(self, image, filename: str):
+    def __init__(self, image, Camera: Camera, filename: str, distorted: bool):
 
-        self.pixel_sequences = self.__read_pixel_sequences_from_csv__(filename)
-
+        self.distorted = distorted
+        self.Camera = Camera
+        self.pixel_sequences = self.__read_pixel_sequences_from_csv__(filename)                
         self.splines = self.__interpolate_pixel_sequences__(self.pixel_sequences)
-    
+
 
     def __read_pixel_sequences_from_csv__(self, filename):
 
@@ -37,6 +39,9 @@ class Annotations():
                         pixel = np.array([[x], [y]])
                         pixel_sequence.append(pixel)
 
+                    if self.distorted == True:
+                        pixel_sequence = Camera.undistort_points(self.Camera, pixel_sequence)
+
                     pixel_sequences.append(pixel_sequence)
         return pixel_sequences
 
@@ -47,18 +52,3 @@ class Annotations():
             spline = Transformation.interpolate_spline_linspace(pixel_sequence, 10, smoothing=0.5)
             splines.append(spline)
         return splines
-
-
-# Annotations(None, '000450')
-
-
-"""
-IDEA:
-- keyframe.Annotations
-
-- reads points per line from csv
-- interpolates into 2D splines of regular spacing (10px)
-
-- for pixel in keyframe.Annotations.splines
-
-"""

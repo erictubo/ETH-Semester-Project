@@ -18,9 +18,19 @@ from transformation import Transformation
 from visualisation import Visualisation
 
 
-
 """ Camera Parameters """
-Camera_1 = Camera(alpha_u= 698.8258566937119*2, alpha_v= 698.6495855393557*2, u0= 492.9705850660823*2, v0= 293.3927615928415*2)
+Camera_0 = Camera(image_size = (1920, 1200),
+                  focal_length = [2*698.8258566937119, 2*698.6495855393557], 
+                  principal_point = [2*492.9705850660823, 2*293.3927615928415], 
+                  distortion_coefficients = [0.15677829213401465, 0.1193983032005652, -0.011287926707786692, 0.23013426724923478]
+                  )
+
+Camera_1 = Camera(image_size = (1920, 1200),
+                  focal_length = [2*698.5551622016458, 2*698.6714179616163],
+                  principal_point = [2*489.7761220331873, 2*297.9103051604121],
+                  distortion_coefficients = [0.16213733886648546, 0.11615082942281711, -0.05779296718987261, 0.324051803251489]
+                  )
+
 
 """ Keyframes """
 def create_keyframes(ids):
@@ -28,7 +38,7 @@ def create_keyframes(ids):
     keyframes: list[KeyFrame] = []
     for id in ids:
         id = int(id)
-        keyframe = KeyFrame(id, Camera_1)
+        keyframe = KeyFrame(id, Camera_0)
         if keyframe.GPS.is_missing_data:
             # print("Keyframe #", id, "missing data >> skipped")
             np.delete(ids, np.where(ids == id))
@@ -39,7 +49,6 @@ def create_keyframes(ids):
 
 
 ids = np.arange(0, 1928, 25)
-keyframes = create_keyframes(ids)
 
 """
 Pre-processing of relevant railway map:
@@ -55,6 +64,8 @@ r_behind = 50
 create_railway = input("Create a new railway object? [y/n]: ")
 if create_railway == 'y':
 
+    keyframes = create_keyframes(ids)
+
     railway = Railway(keyframes, max_gap=max_gap, r_ahead=r_ahead, r_behind=r_behind)
 
     with open(railway_object_file, 'wb') as file:
@@ -67,10 +78,12 @@ else:
         railway = pickle.load(file)
 
 
-plot_railway_2D = True
+plot_railway_2D = False
 plot_railway_3D = False
 
 if plot_railway_2D:
+    keyframes = create_keyframes(ids)
+
     for track in railway.tracks:
         for point in railway.points_in_tracks_2D[track]:
             Visualisation.plot_XY(point[0], point[1], 'orange')
@@ -83,6 +96,8 @@ if plot_railway_2D:
     Visualisation.show_plot()
 
 if plot_railway_3D:
+    keyframes = create_keyframes(ids)
+
     ax = Visualisation.create_3D_plot("All points in tracks")
     for track in railway.tracks:
         color = 'blue'
@@ -156,26 +171,30 @@ for keyframe in keyframes:
 
         points_gps = Transformation.interpolate_spline_linspace(points_gps, desired_spacing=0.05, smoothing=0.1, maximum=False)
 
-        points_cam = Transformation.transform_points(H_cam_gps, points_gps)
+        color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
 
-        pixels = Transformation.project_camera_points_to_pixels(keyframe.Camera, points_cam)
+        points_gps_L, points_gps_R = Transformation.separate_track_into_left_right(points_gps)
 
-        if len(pixels) > 2:
+        for points_gps_separated in [points_gps_L, points_gps_R]:
 
-            # Remove duplicates
-            unique_pixels = [pixels[0]]
-            for pixel in pixels:
-                if np.linalg.norm(pixel - unique_pixels[-1]) >= 10:
-                    unique_pixels.append(pixel)
-            pixels = unique_pixels
+            # Convert to camera frame, using prior estimate of camera pose
+            points_cam = Transformation.transform_points(H_cam_gps, points_gps_separated)
 
-            # lines = Visualisation.convert_consecutive_pixels_to_2D_lines(new_pixels)
-            color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+            # Reproject onto image plane
+            pixels = Transformation.project_camera_points_to_pixels(keyframe.Camera, points_cam)
 
-            reprojected_visual = Visualisation.draw_on_image(reprojected_visual, pixels, False, (255, 0, 0))
+            if len(pixels) > 2:
+                unique_pixels = [pixels[0]]
+                for pixel in pixels:
+                    if np.linalg.norm(pixel - unique_pixels[-1]) >= 10:
+                        unique_pixels.append(pixel)
+                pixels = unique_pixels
 
-            original_pixels = Transformation.project_points_to_pixels(Camera_1, H_cam_w, points_w)
-            reprojected_visual = Visualisation.draw_on_image(reprojected_visual, original_pixels, False, (0,0,255))
+                # lines = Visualisation.convert_consecutive_pixels_to_2D_lines(pixels)
+                reprojected_visual = Visualisation.draw_on_image(reprojected_visual, pixels, False, (255, 0, 0))
+
+                original_pixels = Transformation.project_points_to_pixels(Camera_0, H_cam_w, points_w)
+                reprojected_visual = Visualisation.draw_on_image(reprojected_visual, original_pixels, False, (0,0,255))
 
 
     annotated_visual = reprojected_visual.copy()
@@ -185,12 +204,9 @@ for keyframe in keyframes:
         annotated_visual = Visualisation.draw_on_image(annotated_visual, pixel_sequence, False, (0, 255, 255))
 
 
-    
-    
-    # Reproject all railway nodes for comparison with splines
-    # all_railway_nodes_w = keyframe.GPS.railway_nodes_w
-    # all_pixels = Transformation.project_points_to_pixels(keyframe.Camera, H_cam_w, all_railway_nodes_w)
-    # visual = Visualisation.draw_on_image(visual, all_pixels, None)
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/reprojected splines undistorted/" + keyframe.filename + "_reprojection.jpg", reprojected_visual)
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/annotated splines undistorted/" + keyframe.filename + "_annotation.jpg", annotated_visual)
 
-    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/reprojected splines/" + keyframe.filename + "_reprojection.jpg", reprojected_visual)
-    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/annotated splines/" + keyframe.filename + "_annotation.jpg", annotated_visual)
+    print("Saved image pair")
+
+print("Finished")

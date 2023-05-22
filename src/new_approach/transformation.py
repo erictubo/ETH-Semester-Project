@@ -6,6 +6,7 @@ from scipy.spatial.transform import Rotation
 from scipy.interpolate import splprep, splev, CubicSpline
 
 from camera import Camera
+from data import track_width
 
 
 class Transformation:
@@ -59,35 +60,38 @@ class Transformation:
         Converts euler angles to other specified parametrisation: "rotation matrix" (default) or "quaternions"
         """
         assert len(euler_angles) == 3, len(euler_angles)
+        rotation = Rotation.from_euler('zyx', [[euler_angles[0], euler_angles[1], euler_angles[2]]])
 
         if to_type == "rotation matrix":
-            euler = Rotation.from_euler('zyx', [[euler_angles[0], euler_angles[1], euler_angles[2]]])
-            rotation_matrix = euler.as_matrix().squeeze()
-            # ang_x, ang_y, ang_z = euler_angles
-            # R_x = np.array([[1, 0, 0], [0, np.cos(ang_x), -np.sin(ang_x)], [0, np.sin(ang_x), np.cos(ang_x)]])
-            # R_y = np.array([[np.cos(ang_y), 0, np.sin(ang_y)], [0, 1, 0], [-np.sin(ang_y), 0, np.cos(ang_y)]])
-            # R_z = np.array([[np.cos(ang_z), -np.sin(ang_z), 0], [np.sin(ang_z), np.cos(ang_z), 0], [0, 0, 1]])
-            # rotation_matrix = R_z @ (R_y @ R_x)
-
+            rotation_matrix = rotation.as_matrix().squeeze()
             assert rotation_matrix.shape == (3,3), rotation_matrix.shape
             return rotation_matrix
-        
         elif to_type == "quaternions":
-            pass
+            quaternions = rotation.as_quat().squeeze()
+            assert quaternions.shape == (4,), quaternions.shape
+            return quaternions
+        else:
+            raise ValueError("Unknown conversion type: " + str(to_type))
+        
         
     @staticmethod
     def convert_quaternions(quaternions: np.ndarray[float], to_type: str = "rotation matrix") -> np.ndarray[float]:
         """
         Converts quaternions to other specified parametrisation:"rotation matrix" (default) or "euler angles"
         """
-        euler_angles = quaternions.as_euler('zyx')
-        euler = Rotation.from_euler('zyx', [[euler_angles[0], euler_angles[1], euler_angles[2]]])
+        assert quaternions.shape == (4,), quaternions.shape
+        rotation = Rotation.from_quat(quaternions)
+
         if to_type == "euler angles" or "euler":
-            return euler
+            euler_angles = rotation.as_euler('zyx')
+            assert euler_angles.shape == (3,), euler_angles.shape
+            return euler_angles
         elif to_type == "rotation matrix" or "matrix":
-            rotation_matrix = euler.as_matrix().squeeze()
+            rotation_matrix = rotation.as_matrix().squeeze()
             assert rotation_matrix.shape == (3,3), rotation_matrix.shape
             return rotation_matrix
+        else:
+            raise ValueError("Unknown conversion type: " + str(to_type))
         
 
     @staticmethod
@@ -95,7 +99,19 @@ class Transformation:
         """
         Converts rotation matrix to other specified parametrisation: "quaternions" (default) or "euler angles"
         """
-        pass
+        assert rotation_matrix.shape == (3,3), rotation_matrix.shape
+        rotation = Rotation.from_matrix(rotation_matrix)
+
+        if to_type == "quaternions":
+            quaternions = rotation.as_quat().squeeze()
+            assert quaternions.shape == (4,), quaternions.shape
+            return quaternions
+        elif to_type == "euler angles":
+            euler_angles = rotation.as_euler('zyx')
+            assert euler_angles.shape == (3,), euler_angles.shape
+            return euler_angles
+        else:
+            raise ValueError("Unknown conversion type: " + str(to_type))
     
 
     """
@@ -296,10 +312,36 @@ class Transformation:
         return new_points
 
 
+    @staticmethod
+    def separate_track_into_left_right(points: list[np.ndarray]):
+
+        left_points: list[np.ndarray] = []
+        right_points: list[np.ndarray] = []
+
+        for i, point in enumerate(points):
+
+            if i == 0:
+                gradient = points[i+1] - points[i]
+            elif i == len(points)-1:
+                gradient = points[i] - points[i-1]
+            else:
+                gradient = points[i+1] - points[i-1]
+
+            gradient[2] = 0
+            gradient = gradient / np.linalg.norm(gradient)
+
+            perpendicular = np.zeros([3,1])
+            perpendicular[0] = gradient[1]
+            perpendicular[1] = -gradient[0]
+            
+            left_point = point + perpendicular * track_width/2
+            right_point = point - perpendicular * track_width/2
+
+            left_points.append(left_point)
+            right_points.append(right_point)
 
 
-
-
+        return left_points, right_points
 
 
 
