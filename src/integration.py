@@ -2,7 +2,10 @@
 import sys
 import numpy as np
 
-from cpp.optimization import optimize_camera_pose
+sys.path.append('./cpp')
+
+from cpp.optimization import test_function
+
 
 if __name__ == '__main__':
 
@@ -27,6 +30,9 @@ if __name__ == '__main__':
     camera_pose = np.array([0.1, 0.1, 0.1, 0.5, -0.5, 0.5, -0.5], dtype=np.float32)
 
     # Optimize camera pose
-    new_camera_pose = optimize_camera_pose(gps_3D_points, observed_2D_points, camera_intrinsics, camera_pose)
+    # new_camera_pose = optimize_camera_pose(gps_3D_points, observed_2D_points, camera_intrinsics, camera_pose)
 
-    print("New camera pose: ", new_camera_pose)
+    # print("New camera pose: ", new_camera_pose)
+
+    # Test function
+    test_function()

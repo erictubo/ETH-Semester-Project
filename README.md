@@ -1,7 +1,11 @@
 # Multi-Frame Extrinsics Estimation
-**<u>Online Extrinsic Camera Calibration from Multiple Frames using Map Information</u>**
+**<u>Project Title: Online Extrinsic Camera Calibration from Multiple Keyframes using Map Information</u>**
 
-The aim is to build upon the previous work done by Nicolina and find new approaches to generate enhanced labels by leveraging information accross multiple keyframes.
+This project implements an algorithm to compute the relative pose between a GPS sensor and a monocular, intrinsically-calibrated camera at the front of a track vehicle (mounted rigidly in an unknown location that is to be inferred from its images).
+
+Building upon the previous work done by Nicolina (branch: main) this project aims to come up with a more accurate and robust estimation process. To achieve this, map information is combined with detected railway tracks and an iterative approach is used that leverages information across multiple keyframes.
+
+Note that the detection pipeline is not implemented (yet), but annotated features are used to simulate their input.
 
 **Axis Definitions & Coordinate Systems**
 
@@ -13,52 +17,47 @@ The aim is to build upon the previous work done by Nicolina and find new approac
 | Vertical (downward)       | $+Y_C$ | $+Z_T$ | Yaw      |
 
 
+**Python Packages**
 
-...
-
-The purpose of this project was to create an algorithm to compute the relative pose between GPS and a monocular, intrinsically-calibrated camera at the front of a track vehicle.  Assuming that the monocular camera and GPS are installed on one rigid body, the extrinsics, once computed, can continuously be
-used until the camera is dismounted from the train. 
-
-The six parameters of the pose are computed in a multi-staged fashion. After the railway tracks have been successfully detected, the functions computing the six pose estimates are called in a predefined order by the main function.
-
-
-
-**Installation**
-
-The following packages are needed to run this project:
-
-- numpy (version 1.23.4)
-
-- matplotlib (version 3.6.2)
-
-- scipy (version 1.9.3)
-
-- pandas (version 1.5.0)
-
-  
-
-**Set-up**
-
-For running this project few set-ups have to be done.
-
-- In the "ImageAttributes"-class defined starting on line 24 in "main.py", the path for the images of the camera and the path for the train poses synced to the image frames must be defined,
-- The instrinsics of the camera have to be defined on line 93 in the "main.py",
-- From line 132-140 in the "main.py" the image numbers to looked through have to be initialized,
-- In line 38 of "YPosition_estimate.py"  and line 47 in "XZPosition_estimate.py" the path to where the downloaded elevation data should be stored, needs to be defined
-- In line 48 in "XZPosition_estimate.py" the path to the .csv file containing the pole locations, must be defined.
+- numpy
+- matplotlib
+- cv2
+- pickle
+- math
+- random
+- ...
 
 
+**Compilation of C++ & Pybind (Ceres Solver)**
 
-**Usage**
+Compile in build directory using CMake
 
-- After haven gone through the steps defined in the Set-up paragraph, the "main.py" file can be run to start the algorithm.
-- In functions "track_information.py", "vanishing_point_detection.py" and "ZRot_estimate.py" the boolean "isImgVisualization" can be set to "True" to see the visualization of the respective parameters. The images, the information is plotted in, only need to be shown/saved.
+```console
+cd src/cpp/
+mkdir build
+cd build
+cmake ..
+```
 
 
+Make executable, include all dependencies (-I) and link to Ceres (-lceres)
+
+
+```console
+cd -
+
+g++ -std=c++17 -I/usr/local/include/eigen3/ -I/usr/local/include/glog/ -I/usr/local/include/gflags/ -I/usr/local/include/pybind11/ -I/usr/local/include/python3.9 -o optimization -undefined dynamic_lookup $(python3-config --includes) optimization.cc -o optimization$(python3-config --extension-suffix) -lceres
+````
+
+Replace "-undefined dynamic_lookup" with "-fPIC" unde Linux
+
+More info / troubleshooting: https://pybind11.readthedocs.io/en/latest/compiling.html#building-manually
+
+This process reates a CPython file, from which Python can access functions.
 
 **Contact**
 
-Author: Nicolina Spiegelhalter
+Author: Eric Tüschenbönner
 
-E-mail: spiegeln@ethz.ch
+E-mail: etueschenboe@student.ethz.ch
 

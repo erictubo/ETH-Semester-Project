@@ -231,8 +231,15 @@ py::array py_optimize_camera_pose(py::array_t<double, py::array::c_style | py::a
     return py::make_tuple(camera_intrinsics_out, camera_pose_out);
 }
 
+// empty function to test Python bindings
+void py_test_function() {
+    return;
+}
+
 
 PYBIND11_MODULE(camera_pose_optimisation, m) {
     m.doc() = "Optimize camera pose using Ceres";
     m.def("optimize_camera_pose", &py_optimize_camera_pose, "Optimize camera pose");
+
+    m.def("test_function", &py_test_function, "Test function");
 }
