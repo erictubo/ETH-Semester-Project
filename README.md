@@ -49,7 +49,7 @@ cd -
 g++ -std=c++17 -I/usr/local/include/eigen3/ -I/usr/local/include/glog/ -I/usr/local/include/gflags/ -I/usr/local/include/pybind11/ -I/usr/local/include/python3.9 -o optimization -undefined dynamic_lookup $(python3-config --includes) optimization.cc -o optimization$(python3-config --extension-suffix) -lceres
 ````
 
-Replace "-undefined dynamic_lookup" with "-fPIC" unde Linux
+Linux: replace "-undefined dynamic_lookup" with "-fPIC"
 
 More info / troubleshooting: https://pybind11.readthedocs.io/en/latest/compiling.html#building-manually
 

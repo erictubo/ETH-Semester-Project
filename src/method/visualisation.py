@@ -22,7 +22,7 @@ class Visualisation:
             pixels_in_frame = 0
 
             for i, pixel in enumerate(pixels):
-                assert pixel.shape[0] == 2, pixel.shape
+                assert pixel.shape in [(2,), (2,1)], pixel.shape
                 u = int(pixel[0])
                 v = int(pixel[1])
 
@@ -102,7 +102,6 @@ class Visualisation:
         ax.set_aspect('equal')
         return ax
     
-
     @staticmethod
     def plot_XY(X, Y, color: str='blue', scale = 'equal'):
         plt.axis('equal')
@@ -112,7 +111,6 @@ class Visualisation:
     """
     3D Plots
     """
-
 
     @staticmethod
     def create_3D_plot(title: str):
