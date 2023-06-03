@@ -61,3 +61,25 @@ Author: Eric Tüschenbönner
 
 E-mail: etueschenboe@student.ethz.ch
 
+
+
+**Linux Build**
+
+Compile the C++ optimization file.
+
+```console
+cd src/cpp
+mkdir build
+cd build
+cmake ..
+make
+make install
+
+cd src
+
+python3 interface.py
+```
+
+
+delete build directory
+delete "optimization.cpython---.so" file

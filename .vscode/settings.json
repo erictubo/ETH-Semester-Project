@@ -84,5 +84,6 @@
         "algorithm": "cpp",
         "core": "cpp"
     },
-    "cmake.sourceDirectory": "/Users/eric/Developer/LROD_extrinsics_estimation/src/cpp"
+    "cmake.sourceDirectory": "/home/eric/LROD_extrinsics_estimation/src/cpp",
+    "python.analysis.typeCheckingMode": "basic"
 }

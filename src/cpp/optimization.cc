@@ -6,7 +6,7 @@
 #include <eigen3/Eigen/Core>
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
-#include <glog/logging.h>
+// #include <glog/logging.h>
 
 // #include "pybind11/include/pybind11/pybind11.h"
 // #include "pybind11/include/pybind11/numpy.h"
@@ -158,45 +158,50 @@ void cpp_optimize_camera_pose(double camera_intrinsics[4],
 }
 
 
-int main() {
+// int main() {
 
-    double camera_intrinsics[4] = {1400.0, 1400.0, 960.0, 600.0};
-    double camera_pose[7] = {0.1, 0.1, 0.1, 0.5, -0.5, 0.5, -0.5};
+//     double camera_intrinsics[4] = {1400.0, 1400.0, 960.0, 600.0};
+//     double camera_pose[7] = {0.1, 0.1, 0.1, 0.5, -0.5, 0.5, -0.5};
 
-    std::vector<Eigen::Vector2d> observed_2D_points = {
-        Eigen::Vector2d(1.0, 4.0),
-        Eigen::Vector2d(2.0, 5.0),
-        Eigen::Vector2d(3.0, 6.0)
-    };
+//     std::vector<Eigen::Vector2d> observed_2D_points = {
+//         Eigen::Vector2d(1.0, 4.0),
+//         Eigen::Vector2d(2.0, 5.0),
+//         Eigen::Vector2d(3.0, 6.0)
+//     };
 
-    std::vector<Eigen::Vector3d> gps_3D_points = {
-        Eigen::Vector3d(7.0, 10.0, 13.0),
-        Eigen::Vector3d(8.0, 11.0, 14.0),
-        Eigen::Vector3d(9.0, 12.0, 15.0)
-    };
+//     std::vector<Eigen::Vector3d> gps_3D_points = {
+//         Eigen::Vector3d(7.0, 10.0, 13.0),
+//         Eigen::Vector3d(8.0, 11.0, 14.0),
+//         Eigen::Vector3d(9.0, 12.0, 15.0)
+//     };
 
-    cpp_optimize_camera_pose(camera_intrinsics, camera_pose, observed_2D_points, gps_3D_points);
+//     cpp_optimize_camera_pose(camera_intrinsics, camera_pose, observed_2D_points, gps_3D_points);
 
-    return 0;
-}
+//     return 0;
+// }
 
 
 py::array py_optimize_camera_pose(py::array_t<double, py::array::c_style | py::array::forcecast> camera_intrinsics,
                                   py::array_t<double, py::array::c_style | py::array::forcecast> camera_pose,
                                   py::array_t<double, py::array::c_style | py::array::forcecast> observed_2D_points,
                                   py::array_t<double, py::array::c_style | py::array::forcecast> gps_3D_points) {
+    std::cout << "camera_intrinsics shape: " << camera_intrinsics.shape()[0] << "\n";
+    std::cout << "camera_pose shape: " << camera_pose.shape()[0] << "\n";
+    std::cout << "observed_2D_points shape: " << observed_2D_points.shape()[1] << "\n";
+    std::cout << "gps_3D_points shape: " << gps_3D_points.shape()[1] << "\n";
 
-    if (camera_intrinsics.shape(0) != 4) {
-        throw std::runtime_error("camera_intrinsics must have 4 elements: fx, fy, cx, cy");
+    if (camera_intrinsics.shape()[0] != 4) {
+        
+        throw std::runtime_error("camera_intrinsics must have 4 elements: [fx, fy, cx, cy]");
     }
-    if (camera_pose.shape(0) != 7) {
-        throw std::runtime_error("camera_pose must have 7 elements: x, y, z, qx, qy, qz, qw");
+    if (camera_pose.shape()[0] != 7) {
+        throw std::runtime_error("camera_pose must have 7 elements: [x, y, z, qx, qy, qz, qw]");
     }
-    if (observed_2D_points.shape(1) != 2) {
-        throw std::runtime_error("observed_2D_points must have 2 columns: u, v");
+    if (observed_2D_points.shape()[1] != 2) {
+        throw std::runtime_error("observed_2D_points must have 2 columns: [u, v]");
     }
-    if (gps_3D_points.shape(1) != 3) {
-        throw std::runtime_error("gps_3D_points must have 3 columns: x, y, z");
+    if (gps_3D_points.shape()[1] != 3) {
+        throw std::runtime_error("gps_3D_points must have 3 columns: [x, y, z]");
     }
 
     double camera_intrinsics_arr[4];
@@ -241,7 +246,7 @@ void py_test_function() {
 }
 
 
-PYBIND11_MODULE(camera_pose_optimisation, m) {
+PYBIND11_MODULE(optimization, m) {
     m.doc() = "Optimize camera pose using Ceres";
     m.def("optimize_camera_pose", &py_optimize_camera_pose, "Optimize camera pose");
 
