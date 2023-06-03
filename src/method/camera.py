@@ -48,7 +48,7 @@ class Camera:
 
         self.H_gps_cam = initial_H_gps_cam
         self.H_cam_gps = Transformation.invert_homogeneous_transformation(self.H_gps_cam)
-        self.pose_vector = Transformation.compile_pose_vector(self.H_gps_cam)
+        self.pose_vector = Transformation.compile_pose_vector(self.H_cam_gps)
 
 
     @staticmethod
@@ -71,8 +71,8 @@ class Camera:
         from transformation import Transformation
 
         self.pose_vector = pose_vector
-        self.H_gps_cam = Transformation.uncompile_pose_vector(self.pose_vector)
-        self.H_cam_gps = Transformation.invert_homogeneous_transformation(self.H_gps_cam)
+        self.H_cam_gps = Transformation.uncompile_pose_vector(self.pose_vector)
+        self.H_gps_cam = Transformation.invert_homogeneous_transformation(self.H_cam_gps)
 
     def undistort_image(self, distorted_image):
         image = distorted_image.copy()
