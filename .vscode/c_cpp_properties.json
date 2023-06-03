@@ -4,12 +4,7 @@
             "name": "Mac",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/local/include/eigen3/**",
-                "/usr/local/include/ceres/**",
-                "/usr/local/include/glog/**",
-                "/usr/local/include/gflags/**",
-                
-                // "/opt/homebrew/Cellar/suite-sparse/7.0.1/include/**"
+                "/usr/local/include/**"
             ],
             "defines": [],
             "macFrameworkPath": [
