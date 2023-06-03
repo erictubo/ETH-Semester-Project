@@ -19,11 +19,15 @@ namespace py = pybind11;
 
 struct CameraProjectionCostFunctor {
 
-    CameraProjectionCostFunctor(const Eigen::Vector2d observed_2D_point, const Eigen::Vector3d gps_3D_point)
-        : observed_2D_point(observed_2D_point), gps_3D_point(gps_3D_point) {}
+    CameraProjectionCostFunctor(const Eigen::Vector2d observed_2D_point,
+                                const Eigen::Vector3d gps_3D_point,
+                                const double* camera_intrinsics)
+        : observed_2D_point(observed_2D_point),
+          gps_3D_point(gps_3D_point),
+          camera_intrinsics(camera_intrinsics) {}
 
     template <typename T>
-    bool operator()(const T* const camera_pose, const T* const camera_intrinsics, T* residuals) const {
+    bool operator()(const T* const camera_pose, T* residuals) const {
 
         // Extract translation vector & quaternion vector from camera pose
         const T t[3] = {camera_pose[0], camera_pose[1], camera_pose[2]};
@@ -48,13 +52,16 @@ struct CameraProjectionCostFunctor {
         return true;
     }
 
-    static ceres::CostFunction* Create(const Eigen::Vector2d observed_2D_point, const Eigen::Vector3d gps_3D_point) {
-        CameraProjectionCostFunctor* functor = new CameraProjectionCostFunctor(observed_2D_point, gps_3D_point);
-        return new ceres::AutoDiffCostFunction<CameraProjectionCostFunctor, 2, 7, 4>(functor);
+    static ceres::CostFunction* Create(const Eigen::Vector2d observed_2D_point,
+                                       const Eigen::Vector3d gps_3D_point,
+                                       const double* camera_intrinsics){
+        CameraProjectionCostFunctor* functor = new CameraProjectionCostFunctor(observed_2D_point, gps_3D_point, camera_intrinsics);
+        return new ceres::AutoDiffCostFunction<CameraProjectionCostFunctor, 2, 7>(functor);
     }
 
     const Eigen::Vector2d observed_2D_point;
     const Eigen::Vector3d gps_3D_point;
+    const double* camera_intrinsics;
 };
 
 
@@ -129,9 +136,10 @@ void cpp_optimize_camera_pose(double camera_intrinsics[4],
 
         ceres::CostFunction* cost_function = CameraProjectionCostFunctor::Create(
             observed_2D_points[i],
-            gps_3D_points[correspondence_index]);
+            gps_3D_points[correspondence_index],
+            camera_intrinsics);
 
-        problem.AddResidualBlock(cost_function, nullptr, camera_pose, camera_intrinsics);
+        problem.AddResidualBlock(cost_function, nullptr, camera_pose);
     }
     
     // Configure the solver
@@ -154,35 +162,7 @@ void cpp_optimize_camera_pose(double camera_intrinsics[4],
     for (size_t i = 0; i < 7; ++i) {
         std::cout << "camera_pose[" << i << "] = " << camera_pose[i] << "\n";
     }
-    std::cout << "Camera intrinsics after optimization:\n";
-    for (size_t i = 0; i < 4; ++i) {
-        std::cout << "camera_intrinsics[" << i << "] = " << camera_intrinsics[i] << "\n";
-    }
-
 }
-
-
-// int main() {
-
-//     double camera_intrinsics[4] = {1400.0, 1400.0, 960.0, 600.0};
-//     double camera_pose[7] = {0.1, 0.1, 0.1, 0.5, -0.5, 0.5, -0.5};
-
-//     std::vector<Eigen::Vector2d> observed_2D_points = {
-//         Eigen::Vector2d(1.0, 4.0),
-//         Eigen::Vector2d(2.0, 5.0),
-//         Eigen::Vector2d(3.0, 6.0)
-//     };
-
-//     std::vector<Eigen::Vector3d> gps_3D_points = {
-//         Eigen::Vector3d(7.0, 10.0, 13.0),
-//         Eigen::Vector3d(8.0, 11.0, 14.0),
-//         Eigen::Vector3d(9.0, 12.0, 15.0)
-//     };
-
-//     cpp_optimize_camera_pose(camera_intrinsics, camera_pose, observed_2D_points, gps_3D_points);
-
-//     return 0;
-// }
 
 
 py::array py_optimize_camera_pose(py::array_t<double, py::array::c_style | py::array::forcecast> camera_intrinsics,
@@ -234,14 +214,12 @@ py::array py_optimize_camera_pose(py::array_t<double, py::array::c_style | py::a
     cpp_optimize_camera_pose(camera_intrinsics_arr, camera_pose_arr, observed_2D_points_vec, gps_3D_points_vec);
 
 
-    py::array_t<double> camera_intrinsics_out(4);
     py::array_t<double> camera_pose_out(7);
 
     // convert back to numpy arrays
-    std::memcpy(camera_intrinsics_out.mutable_data(), camera_intrinsics_arr, 4 * sizeof(double));
     std::memcpy(camera_pose_out.mutable_data(), camera_pose_arr, 7 * sizeof(double)); 
 
-    return py::make_tuple(camera_intrinsics_out, camera_pose_out);
+    return camera_pose_out;
 }
 
 // empty function to test Python bindings
