@@ -10,6 +10,7 @@ pole_height = 5.3
 
 # Folder containing all data
 path_to_data = '/Users/eric/Developer/Cam2GPS/'
+#path_to_data = '/media/psf/Cam2GPS/'
 
 # Elevation data
 path_to_elevation_data = path_to_data +"elevation/"
