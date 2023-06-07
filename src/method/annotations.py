@@ -50,5 +50,8 @@ class Annotations():
         splines: list[list[np.ndarray]] = []
         for pixel_sequence in pixel_sequences:
             spline = Transformation.interpolate_spline(pixel_sequence, 10, smoothing=0.5)
+            for pixel in spline:
+                pixel[0] = np.rint(pixel[0])
+                pixel[1] = np.rint(pixel[1])
             splines.append(spline)
         return splines

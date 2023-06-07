@@ -5,8 +5,6 @@ import numpy as np
 import cv2
 
 
-
-
 class Camera:
 
     def __init__(self, focal_length, principal_point, image_size,
@@ -40,9 +38,8 @@ class Camera:
             self.fy, self.fy, self.cx, self.cy = self.__get_intrinsics_from_matrix__(self.K)
         else:
             raise Exception("Distortion model not implemented yet")
-        
-        self.intrinsics_vector = np.array([self.fx, self.fy, self.cx, self.cx])
-
+                
+        self.intrinsics_vector = np.array([self.fx, self.fy, self.cx, self.cy])
 
         from transformation import Transformation
 
@@ -67,10 +64,11 @@ class Camera:
         cy = K[1][2]
         return fx, fy, cx, cy
     
-    def update_pose(self, pose_vector: np.ndarray):
-        from transformation import Transformation
+    def update_pose(self, new_pose_vector: np.ndarray):
+        assert new_pose_vector.shape == self.pose_vector.shape, (new_pose_vector.shape, self.pose_vector.shape)
+        self.pose_vector = new_pose_vector
 
-        self.pose_vector = pose_vector
+        from transformation import Transformation
         self.H_cam_gps = Transformation.uncompile_pose_vector(self.pose_vector)
         self.H_gps_cam = Transformation.invert_homogeneous_transformation(self.H_cam_gps)
 
@@ -80,7 +78,6 @@ class Camera:
         return undistorted_image
 
     def undistort_points(self, points: list[np.ndarray]) -> list[np.ndarray]:
-
         points_array = np.squeeze(np.asarray(points))
         points_array = np.array([points_array], dtype=np.float32)
 
