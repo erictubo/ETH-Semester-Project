@@ -57,20 +57,28 @@ class Transformation:
     
     @staticmethod
     def compile_pose_vector(H: np.ndarray):
+        """
+        Compiles homogeneous transformation matrix (4,4) into pose vector (7,) [x, y, z, qw, qx, qy, qz].
+        """
         R, t = Transformation.separate_homogeneous_transformation(H)
         q_xyzw = Transformation.convert_rotation_matrix(R)
         # Change quaternion sequence to match Ceres
-        q_wxyz = np.append(q_xyzw[-1], q_xyzw[0:3])
+        q_wxyz = np.append(q_xyzw[3], q_xyzw[0:3])
+        assert q_wxyz[0] == q_xyzw[3]
         pose_vector = np.append(t, q_wxyz)
         assert pose_vector.shape == (7,), pose_vector.shape
         return pose_vector
     
     @staticmethod
     def uncompile_pose_vector(pose_vector: np.ndarray):
+        """
+        Uncompiles pose vector (7,) [x, y, z, qw, qx, qy, qz] into homogeneous transformation matrix (4,4).
+        """
         assert pose_vector.shape == (7,), pose_vector.shape
         t = pose_vector[0:3]
         q_wxyz = pose_vector[3:7]
         q_xyzw = np.append(q_wxyz[1:4], q_wxyz[0])
+        assert q_xyzw[3] == q_wxyz[0]
         R = Transformation.convert_quaternions(q_xyzw)
         H = Transformation.compile_homogeneous_transformation(R, t)
         return H
@@ -288,6 +296,10 @@ class Transformation:
 
         assert(len(points)) > 1, print("Provide at least 2 points for interpolation")
 
+        # reverse list if last point closer than first point
+        if np.linalg.norm(points[0]) > np.linalg.norm(points[-1]):
+            points = points[len(points) - 1::-1]
+
         covered_distance = 0
         for i in range(1, len(points)):
             covered_distance += np.linalg.norm(points[i]-points[i-1])
@@ -318,7 +330,7 @@ class Transformation:
         # print(len(points), "->", len(new_points), "interpolated points")
 
         return new_points
-    
+
 
     @staticmethod
     def separate_track_into_left_right(points: list[np.ndarray]):
