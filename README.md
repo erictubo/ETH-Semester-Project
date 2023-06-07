@@ -9,12 +9,11 @@ Note that the detection pipeline is not implemented (yet), but annotated feature
 
 **Axis Definitions & Coordinate Systems**
 
-
-| Direction                 | Camera | Train  | Rotation |
-|---------------------------|--------|--------|----------|
-| Longitudinal (forward)    | $+Z_C$ | $+X_T$ | Roll     |
-| Lateral (sideways, right) | $+X_C$ | $+Y_T$ | Pitch    |
-| Vertical (downward)       | $+Y_C$ | $+Z_T$ | Yaw      |
+| Direction                 | Rotation | GPS axis   | Camera axis |
+|---------------------------|----------|------------|-------------|
+| Longitudinal (forward)    | Roll     | $+X_{GPS}$ | $+Z_C$      |
+| Lateral (sideways, right) | Pitch    | $+Y_{GPS}$ | $+X_C$      |
+| Vertical (upwards)        | Yaw      | $+Z_{GPS}$ | $-Y_C$      |
 
 
 **Python Packages**

@@ -1,0 +1,15 @@
+\chapter{Introduction}
+\label[chapter]{chapter:introduction}
+
+Obstacle detection is crucial for the safe operation of railway vehicles. A pre-requisite for this is knowing where to look for obstacles, which means that tracks ahead of the vehicle need to be correctly identified and located. This could be done by projecting a known railway map into camera view. However, this requires precise knowledge of the camera position and rotation -- not typically available in the field or with existing datasets. Given the degree of accuracy required for long-range obstacle detection this is a non-trivial task.\\
+
+% Problem Description
+
+The aim of this semester project is to develop a continuous calibration and reprojection pipeline to estimate the extrinsic parameters of a camera, whose intrinsic parameters are known, given a set of images and associated pose readings from a GPS sensor that is also attached to the vehicle. Moreover, different map data is available, including OpenStreetMap (OSM) data with the positions and properties of railway nodes and tracks, elevation data, as well as a positions of poles that are located next to all railway tracks. The challenge here is to make best possible use of the data combined with visual cues to design an optimisation framework that converges to accurate results.\\
+
+% Previous Approach
+
+Building upon previous work by Nicolina Spiegelhalter \cite{ReportNicolina}
+
+% Summarise my approach
+
