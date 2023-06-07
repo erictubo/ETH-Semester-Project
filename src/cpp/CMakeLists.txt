@@ -7,11 +7,12 @@ SET(CMAKE_INSTALL_PREFIX .)
 
 find_package(Eigen3 REQUIRED)
 find_package(Ceres REQUIRED)
-# find_package(glog REQUIRED)
 find_package(gflags REQUIRED)
+# find_package(glog REQUIRED)
 # find_package(SuiteSparse REQUIRED)
+find_package(OpenCV REQUIRED)
 
-include_directories(${CERES_INCLUDE_DIRS})
+include_directories(${CERES_INCLUDE_DIRS}, ${OpenCV_INCLUDE_DIRS})
 
 # find_package(pybind11 REQUIRED)
 add_subdirectory(pybind11)

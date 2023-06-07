@@ -3,6 +3,8 @@
 #include <limits>
 #include <vector>
 
+// include opencv
+
 #include <eigen3/Eigen/Core>
 #include <ceres/ceres.h>
 #include <ceres/rotation.h>
@@ -34,12 +36,16 @@ struct CameraProjectionCostFunctor {
 
         T gps[3] = {T(gps_3D_point[0]), T(gps_3D_point[1]), T(gps_3D_point[2])};
 
+        gps[0] += t[0];
+        gps[1] += t[1];
+        gps[2] += t[2];
+
         T cam[3];
+
         ceres::QuaternionRotatePoint(q, gps, cam);
-        
-        cam[0] += t[0];
-        cam[1] += t[1];
-        cam[2] += t[2];
+        // cam[0] += t[0];
+        // cam[1] += t[1];
+        // cam[2] += t[2];
 
         // Project 3D point to 2D image coordinates using camera intrinsics (fx, fy, cx, cy)
         const T projected_x = camera_intrinsics[0] * (cam[0] / cam[2]) + camera_intrinsics[2];
@@ -78,28 +84,13 @@ Eigen::Vector2d ReprojectPoint(const Eigen::Vector3d& gps_3D_point,
     const Eigen::Vector4d q(camera_pose[3], camera_pose[4], camera_pose[5], camera_pose[6]);
 
     // transform translation vector to camera frame
-    //Eigen::Vector3d gps_3D_point_cam = gps_3D_point + t;
+    Eigen::Vector3d gps_3D_point_cam = gps_3D_point + t;
 
     Eigen::Vector3d cam_3D_point;
-    ceres::QuaternionRotatePoint(q.data(), gps_3D_point.data(), cam_3D_point.data());
+    ceres::QuaternionRotatePoint(q.data(), gps_3D_point_cam.data(), cam_3D_point.data());
 
-    cam_3D_point += t;
-
-    // ignore point if behind camera (z < 0), fill in with NAN
-    if (cam_3D_point[2] < 0) {
-        return Eigen::Vector2d(NAN, NAN);
-    }
     Eigen::Vector2d reprojected_2d_point(fx * (cam_3D_point[0] / cam_3D_point[2]) + cx,
-                                        fy * (cam_3D_point[1] / cam_3D_point[2]) + cy);
-
-    // IDEA: pass on image dimensions as part of intrinsics vector (last two elements)
-    // or simply check size of image
-
-    // ignore point if outside of image dimensions, fill in with NAN
-    if (reprojected_2d_point[0] < 0 || reprojected_2d_point[0] > 1920 ||
-        reprojected_2d_point[1] < 0 || reprojected_2d_point[1] > 1080) {
-        return Eigen::Vector2d(NAN, NAN);
-    }
+                                         fy * (cam_3D_point[1] / cam_3D_point[2]) + cy);
     return reprojected_2d_point;
 };
 
@@ -126,21 +117,15 @@ int FindCorrespondenceIndex(const Eigen::Vector2d& observed_2D_point,
     const size_t num_points = reprojected_2D_points.size();
 
     for (size_t i = 0; i < num_points; ++i) {
-        // if point is not NAN
-        if (std::isnan(reprojected_2D_points[i][0]) || std::isnan(reprojected_2D_points[i][1])) {
-            continue;
-        }
-        else {
-            // Calculate distance to observed point
-            double dx = reprojected_2D_points[i][0] - observed_2D_point[0];
-            double dy = reprojected_2D_points[i][1] - observed_2D_point[1];
-            double distance = std::sqrt(dx * dx + dy * dy);
+        // Calculate distance to observed point
+        double dx = reprojected_2D_points[i][0] - observed_2D_point[0];
+        double dy = reprojected_2D_points[i][1] - observed_2D_point[1];
+        double distance = std::sqrt(dx * dx + dy * dy);
 
-            // Update closest point if distance is smaller
-            if (distance < closest_distance) {
-                closest_distance = distance;
-                closest_index = static_cast<int>(i);
-            }
+        // Update closest point if distance is smaller
+        if (distance < closest_distance) {
+            closest_distance = distance;
+            closest_index = static_cast<int>(i);
         }
     }
     return closest_index;
@@ -161,12 +146,8 @@ void VisualiseCorrespondences(const std::vector<int>& correspondence_indices,
                  cv::Scalar(0, 255, 0));
 
         cv::circle(visualisation, cv::Point2d(observed_2D_points[i][0], observed_2D_points[i][1]), 3, cv::Scalar(255, 0, 0), -1);
-        //cv::circle(visualisation, cv::Point2d(reprojected_2D_points[j][0], reprojected_2D_points[j][1]), 3, cv::Scalar(0, 0, 255), -1);
+        cv::circle(visualisation, cv::Point2d(reprojected_2D_points[j][0], reprojected_2D_points[j][1]), 3, cv::Scalar(0, 0, 255), -1);
         }
-
-    for (int i = 0; i < reprojected_2D_points.size(); ++i) {
-        cv::circle(visualisation, cv::Point2d(reprojected_2D_points[i][0], reprojected_2D_points[i][1]), 3, cv::Scalar(0, 0, 255), -1);
-    }
 }
 
 
@@ -181,54 +162,17 @@ void SaveVisualisation(const cv::Mat& visualisation,
 
 void cpp_optimize_camera_pose(const std::string filename,
                               const cv::Mat& image,
-                              std::vector<Eigen::Vector2d>& observed_2D_points,
+                              const std::vector<Eigen::Vector2d>& observed_2D_points,
                               const std::vector<Eigen::Vector3d>& gps_3D_points,
                               const double camera_intrinsics[4],
                               double camera_pose[7]
                               ) {
 
-    // check that all observed points are inside image, go backwards to avoid index errors
-    // for (int i = observed_2D_points.size() - 1; i >= 0; --i) {
-    //     if (observed_2D_points[i][0] < 50 || observed_2D_points[i][0] > 1920 - 50 ||
-    //         observed_2D_points[i][1] < 50 || observed_2D_points[i][1] > 1200 - 50) {
-    //         std::cout << "point " << observed_2D_points[i].transpose() << " is outside image, removing\n";
-    //         observed_2D_points.erase(observed_2D_points.begin() + i);
-    //     }
-    // }
-
-
-    // // print camera intrinsics
-    // std::cout << "camera intrinsics [fx, fy, cx, cy]:\n";
-    // for (int i = 0; i < 4; ++i) {
-    //     std::cout << camera_intrinsics[i] << " ";
-    // }
-
-    // // Tests to see data is being passed & processed correctly
-    // const Eigen::Vector3d t(camera_pose[0], camera_pose[1], camera_pose[2]);
-    // std::cout << "translation:\n" << t.transpose() << std::endl;
-
-    // const Eigen::Vector4d q(camera_pose[3], camera_pose[4], camera_pose[5], camera_pose[6]);
-    // std::cout << "quaternion:\n" << q.transpose() << std::endl;
-
-    // // rotate points (1, 0, 0), (0, 1, 0), (0, 0, 1) by quaternion
-    // for (int i = 0; i < 3; ++i) {
-    //     Eigen::Vector3d point(i == 0, i == 1, i == 2);
-    //     point += t;
-    //     Eigen::Vector3d rotated_point;
-    //     ceres::QuaternionRotatePoint(q.data(), point.data(), rotated_point.data());
-    //     std::cout << "point gps: " << point.transpose() << " -> point cam: " << rotated_point.transpose() << std::endl;
-    // }
-
-    // // print first 2 gps 3d points
-    // std::cout << "gps 3d points C++:\n";
-    // for (int i = 0; i < 2; ++i) {
-    //     std::cout << gps_3D_points[i].transpose() << std::endl;
-    // }
-
-
     const size_t num_reprojected_points = gps_3D_points.size();
     std::vector<Eigen::Vector2d> reprojected_2D_points(num_reprojected_points);
 
+    std::vector<int> correspondence_indices(num_reprojected_points);
+    
     // multiple ICP iterations with correspondence index updates
     for (int iteration = 0; iteration < 10; ++iteration) {
 
@@ -238,14 +182,10 @@ void cpp_optimize_camera_pose(const std::string filename,
 
         const size_t num_observed_points = observed_2D_points.size();
 
-        std::vector<int> correspondence_indices(num_reprojected_points);
-        std::vector<int> correspondence_count(num_observed_points, 0);
-
         // Find correspondence for each observed point
         for (size_t i = 0; i < num_observed_points; ++i) {
 
             correspondence_indices[i] = FindCorrespondenceIndex(observed_2D_points[i], reprojected_2D_points);
-            correspondence_count[correspondence_indices[i]] += 1;
 
             ceres::CostFunction* cost_function = CameraProjectionCostFunctor::Create(
                 observed_2D_points[i],
@@ -255,20 +195,9 @@ void cpp_optimize_camera_pose(const std::string filename,
             problem.AddResidualBlock(cost_function, nullptr, camera_pose);
         }
 
-        // print observed points with too many correspondences
-        for (int i = 0; i < num_observed_points; ++i) {
-            if (correspondence_count[i] > 10) {
-                std::cout << "observed point: " << observed_2D_points[i].transpose() << " has " << correspondence_count[i] << " correspondences\n";
-            }
-        }
-
-        std::cout << "A" << std::endl;
-        
         cv::Mat visualisation = image.clone();
         VisualiseCorrespondences(correspondence_indices, observed_2D_points, reprojected_2D_points, visualisation);
         SaveVisualisation(visualisation, filename, iteration);
-
-        std::cout << "B" << std::endl;
         
         // Configure the solver
         ceres::Solver::Options options;
@@ -280,13 +209,9 @@ void cpp_optimize_camera_pose(const std::string filename,
         // options.minimizer_progress_to_stdout = true;
         options.sparse_linear_algebra_library_type = ceres::SparseLinearAlgebraLibraryType::SUITE_SPARSE;
 
-        std::cout << "C" << std::endl;
-
         // Solve the problem
         ceres::Solver::Summary summary;
         ceres::Solve(options, &problem, &summary);
-
-        std::cout << "D" << std::endl;
 
         // Print the results
         // std::cout << summary.FullReport() << "\n";
