@@ -62,3 +62,21 @@ class KeyFrame:
         pose_path = path_to_poses + str(self.filename) + '.yaml'
         with open(pose_path, 'r') as stream: gps_pose = yaml.safe_load(stream)
         return gps_pose
+    
+
+def create_keyframes(ids: list[int], camera: Camera) -> list[KeyFrame]:
+    """
+    Create a list of keyframe objects of the same camera, discarding those with missing data.
+    """
+    keyframes: list[KeyFrame] = []
+    for id in ids:
+        id = int(id)
+        keyframe = KeyFrame(id, camera)
+        if keyframe.GPS.is_missing_data:
+            print("Keyframe #", id, "missing data >> skipped")
+            np.delete(ids, np.where(ids == id))
+            continue
+        # print("Keyframe #", id)
+        # print("Keyframe", id, "added")
+        keyframes.append(keyframe)
+    return keyframes
