@@ -2,13 +2,13 @@ This is BibTeX, Version 0.99d (TeX Live 2023)
 Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: report.aux
 The style file: bibliography/IEEEtranN.bst
+I found no \citation commands---while reading file report.aux
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
 Reallocated singl_function (elt_size=4) to 100 items from 50.
 Database file #1: bibliography/references.bib
-Warning--I didn't find a database entry for "ReportNicolina"
 -- IEEEtranN.bst version 1.13 (2008/09/30) by Michael Shell.
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
@@ -20,7 +20,7 @@ Reallocated glb_str_end (elt_size=4) to 20 items from 10.
 Done.
 You've used 0 entries,
             4749 wiz_defined-function locations,
-            936 strings with 8131 characters,
+            934 strings with 8103 characters,
 and the built_in function-call counts, 112 in all, are:
 = -- 0
 > -- 0
@@ -59,4 +59,4 @@ warning$ -- 0
 while$ -- 0
 width$ -- 0
 write$ -- 23
-(There was 1 warning)
+(There was 1 error message)

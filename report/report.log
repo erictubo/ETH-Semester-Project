@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.6.7)  7 JUN 2023 15:25
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.6.7)  8 JUN 2023 13:01
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -839,7 +839,7 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 46.
  (/usr/local/texlive/2023/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-<images/eth_logo.pdf, id=143, 8857.09pt x 2400.97pt>
+<images/eth_logo.pdf, id=151, 8857.09pt x 2400.97pt>
 File: images/eth_logo.pdf Graphic file (type pdf)
 <use images/eth_logo.pdf>
 Package pdftex.def Info: images/eth_logo.pdf  used on input line 46.
@@ -848,7 +848,7 @@ Package pdftex.def Info: images/eth_logo.pdf  used on input line 46.
 Overfull \vbox (10.27916pt too high) detected at line 46
  []
 
-<images/asl_logo.pdf, id=144, 429.605pt x 196.735pt>
+<images/asl_logo.pdf, id=152, 429.605pt x 196.735pt>
 File: images/asl_logo.pdf Graphic file (type pdf)
 <use images/asl_logo.pdf>
 Package pdftex.def Info: images/asl_logo.pdf  used on input line 46.
@@ -884,17 +884,17 @@ Overfull \hbox (105.9677pt too wide) in paragraph at lines 46--46
 ]
 
 pdfTeX warning: pdflatex (file ./chapters/declaration-originality.pdf): PDF inclusion: found PDF version <1.6>, but at most version <1.5> allowed
-<chapters/declaration-originality.pdf, id=167, 597.55246pt x 845.07718pt>
+<chapters/declaration-originality.pdf, id=175, 597.55246pt x 845.07718pt>
 File: chapters/declaration-originality.pdf Graphic file (type pdf)
 <use chapters/declaration-originality.pdf>
-Package pdftex.def Info: chapters/declaration-originality.pdf  used on input line 55.
+Package pdftex.def Info: chapters/declaration-originality.pdf  used on input line 58.
 (pdftex.def)             Requested size: 597.551pt x 845.07512pt.
 
 
 pdfTeX warning: pdflatex (file ./chapters/declaration-originality.pdf): PDF inclusion: found PDF version <1.6>, but at most version <1.5> allowed
 File: chapters/declaration-originality.pdf Graphic file (type pdf)
 <use chapters/declaration-originality.pdf>
-Package pdftex.def Info: chapters/declaration-originality.pdf  used on input line 55.
+Package pdftex.def Info: chapters/declaration-originality.pdf  used on input line 58.
 (pdftex.def)             Requested size: 597.551pt x 845.07512pt.
 
 
@@ -902,78 +902,66 @@ pdfTeX warning: pdflatex (file ./chapters/declaration-originality.pdf): PDF incl
 
 
 pdfTeX warning: pdflatex (file ./chapters/declaration-originality.pdf): PDF inclusion: found PDF version <1.6>, but at most version <1.5> allowed
-<chapters/declaration-originality.pdf, id=170, page=1, 597.55246pt x 845.07718pt>
+<chapters/declaration-originality.pdf, id=178, page=1, 597.55246pt x 845.07718pt>
 File: chapters/declaration-originality.pdf Graphic file (type pdf)
 <use chapters/declaration-originality.pdf, page 1>
-Package pdftex.def Info: chapters/declaration-originality.pdf , page1 used on input line 55.
+Package pdftex.def Info: chapters/declaration-originality.pdf , page1 used on input line 58.
 (pdftex.def)             Requested size: 597.551pt x 845.07512pt.
 File: chapters/declaration-originality.pdf Graphic file (type pdf)
 <use chapters/declaration-originality.pdf, page 1>
-Package pdftex.def Info: chapters/declaration-originality.pdf , page1 used on input line 55.
+Package pdftex.def Info: chapters/declaration-originality.pdf , page1 used on input line 58.
 (pdftex.def)             Requested size: 597.01303pt x 844.31432pt.
 File: chapters/declaration-originality.pdf Graphic file (type pdf)
 <use chapters/declaration-originality.pdf, page 1>
-Package pdftex.def Info: chapters/declaration-originality.pdf , page1 used on input line 55.
+Package pdftex.def Info: chapters/declaration-originality.pdf , page1 used on input line 58.
 (pdftex.def)             Requested size: 597.01303pt x 844.31432pt.
 File: chapters/declaration-originality.pdf Graphic file (type pdf)
 <use chapters/declaration-originality.pdf, page 1>
-Package pdftex.def Info: chapters/declaration-originality.pdf , page1 used on input line 55.
+Package pdftex.def Info: chapters/declaration-originality.pdf , page1 used on input line 58.
 (pdftex.def)             Requested size: 597.01303pt x 844.31432pt.
 File: chapters/declaration-originality.pdf Graphic file (type pdf)
 <use chapters/declaration-originality.pdf, page 1>
-Package pdftex.def Info: chapters/declaration-originality.pdf , page1 used on input line 55.
+Package pdftex.def Info: chapters/declaration-originality.pdf , page1 used on input line 58.
 (pdftex.def)             Requested size: 597.01303pt x 844.31432pt.
-[1 <./chapters/declaration-originality.pdf>] (./report.toc)
+[1 <./chapters/declaration-originality.pdf>] (./report.toc [2
+
+])
 \tf@toc=\write5
 \openout5 = `report.toc'.
 
- [2
+ [3] [4
 
-] (./chapters/preface.tex) [3
-
-
-] [4
-
-] (./chapters/abstract.tex) [5
+] (./chapters/preface.tex) [5
 
 ] [6
 
-] (./chapters/symbols.tex) [7
+] (./chapters/abstract.tex) [7
 
 ] [8
 
+] (./chapters/symbols.tex) [9
+
+] [10
+
 ] (./chapters/1_introduction.tex
 Chapter 1.
-
-Underfull \hbox (badness 10000) in paragraph at lines 4--5
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 8--9
-
- []
-
-
-Package natbib Warning: Citation `ReportNicolina' on page 1 undefined on input line 12.
-
 )
 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.86 \cleardoublepage
+l.89 \cleardoublepage
                       [1
 
 ]
 pdfTeX warning (ext4): destination with the same identifier (name{page.2}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.86 \cleardoublepage
+l.89 \cleardoublepage
                       [2
 
 ] (./chapters/2_background.tex
 Chapter 2.
-<images/coordinate_systems.jpg, id=278, 2029.5825pt x 1003.75pt>
+<images/coordinate_systems.jpg, id=297, 2029.5825pt x 1003.75pt>
 File: images/coordinate_systems.jpg Graphic file (type jpg)
 <use images/coordinate_systems.jpg>
 Package pdftex.def Info: images/coordinate_systems.jpg  used on input line 10.
@@ -1006,72 +994,64 @@ LaTeX Font Info:    Font shape `OML/cmr/bx/it' in size <7> not available
 (Font)              Font shape `OML/cmm/b/it' tried instead on input line 49.
 LaTeX Font Info:    Font shape `OML/cmr/bx/it' in size <5> not available
 (Font)              Font shape `OML/cmm/b/it' tried instead on input line 49.
-
+ [4]
 Overfull \hbox (1.37294pt too wide) in paragraph at lines 92--93
 []\OT1/cmr/m/n/10 Rotation us-ing the quater-nion prod-uct $\OMS/cmsy/m/n/10 
 $ \OT1/cmr/m/n/10 (equal to cross-product mi-nus dot-product) 
  []
 
-[4]) (./chapters/3_method.tex [5]
+[5]) (./chapters/3_method.tex [6]
 Chapter 3.
-
-Underfull \hbox (badness 10000) in paragraph at lines 4--5
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 6--7
-
- []
-
-<images/overview.png, id=310, 1166.3575pt x 865.2325pt>
+<images/overview.png, id=333, 1166.3575pt x 865.2325pt>
 File: images/overview.png Graphic file (type png)
 <use images/overview.png>
-Package pdftex.def Info: images/overview.png  used on input line 12.
+Package pdftex.def Info: images/overview.png  used on input line 11.
 (pdftex.def)             Requested size: 361.34999pt x 268.04767pt.
-[6
 
- <./images/overview.png>]) (./chapters/4_implementation.tex [7]
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+[7
+
+{/usr/local/texlive/2023/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}] [8 <./images/overview.png>]
+Underfull \hbox (badness 7151) in paragraph at lines 74--75
+[]\OT1/cmr/m/n/10 Transform points into cam-era
+ []
+
+) (./chapters/4_implementation.tex [9]
 Chapter 4.
-) (./chapters/5_results.tex [8
+[10
 
-]
+]) (./chapters/5_results.tex [11]
 Chapter 5.
-) (./chapters/6_conclusion.tex [9
+) (./chapters/6_conclusion.tex [12
 
 ]
 Chapter 6.
-) (./report.bbl [10
+) (./report.bbl [13
 
 ]
 
 Package natbib Warning: Empty `thebibliography' environment on input line 24.
 
-) [11
+) [14
 
-] [12
-
-]
-
-Package natbib Warning: There were undefined citations.
-
-(./report.aux)
+] (./report.aux)
 Package rerunfilecheck Info: File `report.out' has not changed.
-(rerunfilecheck)             Checksum: 3D31A60F27928E911C40C8B9D58DABC4;4865.
+(rerunfilecheck)             Checksum: 452AC18BAC5D43C2258B2C6106475BBD;5134.
  ) 
 Here is how much of TeX's memory you used:
- 27165 strings out of 475980
- 525556 string characters out of 5789004
- 1871757 words of memory out of 5000000
- 47058 multiletter control sequences out of 15000+600000
+ 27182 strings out of 475980
+ 525739 string characters out of 5789004
+ 1869757 words of memory out of 5000000
+ 47063 multiletter control sequences out of 15000+600000
  521360 words of font info for 62 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 104i,18n,97p,806b,568s stack positions out of 10000i,1000n,20000p,200000b,200000s
-</usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb>
-Output written on report.pdf (22 pages, 618052 bytes).
+ 104i,18n,97p,804b,675s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb>
+Output written on report.pdf (26 pages, 629254 bytes).
 PDF statistics:
- 419 PDF objects out of 1000 (max. 8388607)
- 350 compressed objects within 4 object streams
- 77 named destinations out of 1000 (max. 500000)
- 325 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 460 PDF objects out of 1000 (max. 8388607)
+ 385 compressed objects within 4 object streams
+ 88 named destinations out of 1000 (max. 500000)
+ 341 words of extra memory for PDF output out of 10000 (max. 10000000)
 
