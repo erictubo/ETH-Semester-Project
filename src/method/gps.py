@@ -9,14 +9,12 @@ from scipy.spatial.transform import Rotation
 from transformation import Transformation
 from map_info import MapInfo
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from railway import Railway
+
 
 class GPS:
-
-    """
-    Data Object\\
-    Initialised automatically by KeyFrame object\\
-    Use keyframe.GPS to access data
-    """
 
     def __init__(self, pose):
 
@@ -45,12 +43,6 @@ class GPS:
         # Extracted map information
         self.elevation = MapInfo.get_elevation(self.x_w_gps, self.y_w_gps)
 
-        # self.railway_nodes = MapInfo.select_local_railway_nodes(railway_map.railway_nodes, self.x_w_gps, self.y_w_gps, self.heading, r_ahead, r_behind)
-        # self.railway_nodes_w = MapInfo.convert_railway_nodes_to_world_coordinates(self.railway_nodes)
-
-        # self.railway_tracks, self.railway_nodes_in_tracks = MapInfo.get_railway_nodes_by_tracks(self.x_w_gps, self.y_w_gps, self.heading, r_ahead, r_behind)
-
-        # self.railway_segment_lists = MapInfo.divide_into_continuous_segments(self.railway_tracks, self.railway_nodes_in_tracks)
 
     @staticmethod
     def __extract_heading__(pose) -> float:
@@ -73,3 +65,9 @@ class GPS:
         assert quaternions.shape == (4,), quaternions.shape
         assert not np.isnan(quaternions.any())
         return quaternions
+    
+    def __get_local_points_in_tracks__(self, railway: 'Railway', r_ahead: float=None, r_behind: float=None, min_points: int=2):
+        local_tracks, local_points_in_tracks = railway.get_local_points_in_tracks(self, r_ahead, r_behind, min_points)
+
+        self.local_tracks = local_tracks
+        self.local_points_in_tracks = local_points_in_tracks

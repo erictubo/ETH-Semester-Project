@@ -39,7 +39,7 @@ class Visualisation:
 
                 pixels_in_frame += 1
 
-                cv2.circle(image, (u, v), 5, color, -1)
+                cv2.circle(image, (u, v), 3, color, -1)
 
             # print(pixels_in_frame, "/", len(pixels), "pixels inside image")
 
@@ -125,7 +125,7 @@ class Visualisation:
 
     @staticmethod
     def plot_3D_points(ax, points: list[np.ndarray], color: str='blue', scale = 'equal'):
-        X, Y, Z = Transformation.convert_points_to_coordinate_arrays(points)
+        X, Y, Z = Transformation.convert_points_list(points, to_type="components")
         Visualisation.plot_XYZ(ax, X, Y, Z, color, scale)
 
     @staticmethod

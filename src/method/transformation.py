@@ -210,24 +210,24 @@ class Transformation:
         return pixels
 
     @staticmethod
-    def project_point_to_pixel(Camera: Camera, H_cam_a: np.ndarray, point_a: np.ndarray) -> np.ndarray:
+    def project_point_to_pixel(camera: Camera, H_cam_a: np.ndarray, point_a: np.ndarray) -> np.ndarray:
         """
         Project single point from frame "a" directly to camera pixel, given both
         the homogeneous transformation matrix H_cam_a (4,4) and
         the intrinsic camera parameters (via Camera object).
         """
         point_cam = Transformation.transform_points(H_cam_a, point_a)
-        return Transformation.project_camera_point_to_pixel(Camera, point_cam)
+        return Transformation.project_camera_point_to_pixel(camera, point_cam)
     
     @staticmethod
-    def project_points_to_pixels(Camera: Camera, H_cam_a: np.ndarray, points_a: list[np.ndarray]) -> list[np.ndarray]:
+    def project_points_to_pixels(camera: Camera, H_cam_a: np.ndarray, points_a: list[np.ndarray]) -> list[np.ndarray]:
         """
         Project multiple points from frame "a" directly to camera pixels, given both
         the homogeneous transformation matrix H_cam_a (4,4) and
         the intrinsic camera parameters (via Camera object).
         """
         points_cam = Transformation.transform_points(H_cam_a, points_a)
-        return Transformation.project_camera_points_to_pixels(Camera, points_cam)
+        return Transformation.project_camera_points_to_pixels(camera, points_cam)
     
 
     """
@@ -240,15 +240,19 @@ class Transformation:
     @staticmethod
     def convert_points_list(points: list[np.ndarray], to_type="components") -> tuple[np.ndarray]:
         """
-        Converts points "list" to "component vectors" (default) or "array".
+        Converts points "list" to "components" (default) or "array".
         """
         points_array = np.asarray(points)
+        if len(points_array.shape) > 2:
+            points_array = points_array.squeeze()
         assert points_array.shape == (len(points), points[0].shape[0]), \
             print("Array shape", points_array.shape, "with input list length", len(points), "and first point dimension", points[0].shape)
         if to_type == "array":
             return points_array
-        else:
+        elif to_type == "components":
             return Transformation.convert_points_array(points_array, to_type)
+        else:
+            raise ValueError("Unknown to_type", to_type)
 
     @staticmethod
     def convert_points_components(x: tuple[np.ndarray], to_type="list") -> list[np.ndarray]:
@@ -260,8 +264,10 @@ class Transformation:
             print("Array shape", points_array.shape, "with first component shape", x[0].shape, "and dimensions", len(x))
         if to_type == "array":
             return points_array
-        else:
+        elif to_type == "list":
             return Transformation.convert_points_array(points_array, to_type)
+        else:
+            raise ValueError("Unknown to_type", to_type)
 
     @staticmethod
     def convert_points_array(points_array: np.ndarray, to_type: str):
@@ -282,7 +288,7 @@ class Transformation:
                 points_components[i] = points_components[i].squeeze()
             return tuple(points_components)
         else:
-            print(to_type, "not valid")
+            raise ValueError("Unknown to_type", to_type)
 
 
     """

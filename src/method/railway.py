@@ -10,11 +10,13 @@ import math
 from data import path_to_osm_file
 from map_info import MapInfo
 from visualisation import Visualisation
-from transformation import Transformation
-
-# Object types
 from import_osm import (railway_map as RailwayMap, track_node as TrackNode, track_segment as TrackSegment)
-from keyframe import KeyFrame
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from gps import GPS
+    from keyframe import Frame
+    
 
 
 """
@@ -30,28 +32,31 @@ Attributes of railway_map:
 """
 
 
-
-
 class Railway:
     """
-    Data: railway nodes & tracks relevant to railway accross specified keyframes \\
-    Methods:
-    - ...
+    Processed railway in combined map area of given keyframes
+    - this will import relevant railway nodes, interpolate gaps between railway nodes,
+    add elevation data, create compatible tracks, etc.
+    - trade-off: requires initial pre-processing time, but enables much faster reprojection loop
     """
 
-    def __init__(self, keyframes, max_gap, r_ahead, r_behind):
+    def __init__(self, frames: list['Frame'], max_gap: float, r_ahead: float, r_behind: float):
 
-        self.map = RailwayMap("Potsdam2")
-        self.map.import_from_osm_file(path_to_osm_file + "potsdam2.osm")
+        self.max_gap = max_gap
+        self.r_ahead = r_ahead
+        self.r_behind = r_behind
+
+        self.railway_map = RailwayMap("Potsdam2")
+        self.railway_map.import_from_osm_file(path_to_osm_file + "potsdam2.osm")
 
         print("Extracting relevant nodes and tracks")
-        self.nodes = self.__get_relevant_nodes__(keyframes, r_ahead, r_behind)
+        self.nodes = self.__get_relevant_nodes__(frames, r_ahead, r_behind)
         self.tracks, self.tracks_of_nodes = self.__get_tracks_of_nodes__(self.nodes)
         self.nodes_in_tracks = self.__get_nodes_in_tracks__(self.tracks, self.nodes)
 
         print("Found", len(self.tracks), "relevant tracks, with a total of", len(self.nodes), "relevant nodes.")
 
-        print("Filling railway gaps using max_gap =", max_gap, "...")
+        print("Filling railway gaps using max_gap =", max_gap, "[m] ...")
         self.points_in_tracks_2D = self.__convert_nodes_to_gapless_2D_points_in_tracks__(self.tracks, self.nodes_in_tracks, max_gap)
 
         total_points = 0
@@ -64,13 +69,43 @@ class Railway:
 
 
     def plot_map(self):
-        self.map.plotly(plotly.graph_objs.Figure())
+        self.railway_map.plotly(plotly.graph_objs.Figure())
+
+    
+    def visualise_2D(self, frames: list['Frame'] = []):
+
+        for track in self.tracks:
+            for point in self.points_in_tracks_2D[track]:
+                Visualisation.plot_XY(point[0], point[1], 'orange')
+        for node in self.nodes:
+            Visualisation.plot_XY(node.x, node.y, color='red')
+        for frame in frames:
+            point = frame.gps.t_w_gps
+            Visualisation.plot_XY(point[0], point[1], 'black')
+            #plt.Circle((point[0], point[1]), r_ahead, 'red')
+        Visualisation.show_plot()
+
+    def visualise_3D(self, frames: list['Frame'] = []):
+        ax = Visualisation.create_3D_plot("All points in tracks")
+        for track in self.tracks:
+            color = 'blue'
+            if track.is_bridge:
+                color = 'cyan'
+            points = self.points_in_tracks_3D[track]
+            Visualisation.plot_3D_points(ax, points, color)
+        for frame in frames:
+            point = frame.gps.t_w_gps
+            Visualisation.plot_3D_points(ax, [point], 'red')
+        Visualisation.show_plot()
 
 
-    def __get_relevant_nodes__(self, keyframes: list[KeyFrame], r_ahead: float, r_behind: float):
+
+    # Hidden methods: called at initialisation
+
+    def __get_relevant_nodes__(self, frames: list['Frame'], r_ahead: float, r_behind: float):
         nodes: list[TrackNode] = []
-        for keyframe in keyframes:
-            local_nodes = Railway.select_local_nodes(self.map.railway_nodes, keyframe, r_ahead, r_behind)
+        for frame in frames:
+            local_nodes = Railway.select_local_nodes(self.railway_map.railway_nodes, frame, r_ahead, r_behind)
             for node in local_nodes:
                 if node not in nodes:
                     nodes.append(node)
@@ -82,8 +117,8 @@ class Railway:
         tracks_of_nodes: dict[TrackNode: list[TrackSegment]] = {}
         for node in nodes:
             tracks_of_node: list[TrackSegment] = []
-            for track_id in self.map.nodes_to_segment_assignment[node.id]:
-                track = self.map.railway_tracks[track_id]
+            for track_id in self.railway_map.nodes_to_segment_assignment[node.id]:
+                track = self.railway_map.railway_tracks[track_id]
                 if track not in tracks:
                     tracks.append(track)
                 tracks_of_node.append(track)     
@@ -95,8 +130,8 @@ class Railway:
         nodes_in_tracks: dict[TrackSegment: list[TrackNode]] = {}
         for track in tracks:
             nodes_in_track: list[TrackNode] = []
-            for node_id in self.map.segment_to_node_assignment[track.id]:
-                node = self.map.railway_nodes[node_id]
+            for node_id in self.railway_map.segment_to_node_assignment[track.id]:
+                node = self.railway_map.railway_nodes[node_id]
                 if node in nodes:
                     nodes_in_track.append(node)
             nodes_in_tracks[track] = nodes_in_track
@@ -202,9 +237,9 @@ class Railway:
         y = node.y
         if add_elevation:
             z = MapInfo.get_elevation(x, y)
-            point = np.array([[x], [y], [z]])
+            point = np.array([x, y, z])
         else:
-            point = np.array([[x], [y]])
+            point = np.array([x, y])
         return point
 
 
@@ -217,9 +252,9 @@ class Railway:
 
 
     @staticmethod
-    def select_local_nodes(nodes: list[TrackNode], keyframe: KeyFrame, r_ahead: float, r_behind: float = 0):
-        """ Selects local nodes at keyframe GPS pose, according to r_ahead, r_behind """
-        heading, p_x, p_y = keyframe.GPS.heading, keyframe.GPS.x_w_gps, keyframe.GPS.y_w_gps
+    def select_local_nodes(nodes: list[TrackNode], frame: 'Frame', r_ahead: float, r_behind: float = 0):
+        """ Selects local nodes at frame GPS pose, according to r_ahead, r_behind """
+        heading, p_x, p_y = frame.gps.heading, frame.gps.x_w_gps, frame.gps.y_w_gps
         grad_x = np.cos(heading*np.pi/180)
         grad_y = np.sin(heading*np.pi/180)
         selected_nodes = []
@@ -239,12 +274,17 @@ class Railway:
     Local Methods
     """
 
-    def get_local_points_in_tracks(self, keyframe: KeyFrame, r_ahead: float, r_behind: float, min_points: int):
+    def get_local_points_in_tracks(self, gps: 'GPS', r_ahead: float=None, r_behind: float=None, min_points: int=2):
+
+        if r_ahead == None:
+            r_ahead = self.r_ahead
+        if r_behind == None:
+            r_behind = self.r_behind
 
         local_tracks: list[TrackSegment] = []
         local_points_in_tracks: dict[TrackSegment: list[np.ndarray]] = {}
 
-        heading, p_x, p_y = keyframe.GPS.heading, keyframe.GPS.x_w_gps, keyframe.GPS.y_w_gps
+        heading, p_x, p_y = gps.heading, gps.x_w_gps, gps.y_w_gps
         grad_x = np.cos(heading*np.pi/180)
         grad_y = np.sin(heading*np.pi/180)
 

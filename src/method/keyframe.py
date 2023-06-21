@@ -4,48 +4,38 @@
 import numpy as np
 import cv2
 import yaml
+import random
 
 from data import path_to_images, path_to_poses
-from camera import Camera
+
 from gps import GPS
-from image_features import Image
 from annotations import Annotations
+from transformation import Transformation
+from visualisation import Visualisation
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from railway import Railway
+    from camera import Camera
 
-class KeyFrame:
+class Frame:
     """
-    Data Object
-    - .id
-    - .Camera (data object)
-    - .Image (data object)
-    - .GPS (data object)
+    Initialise basic Frame objects to create processed Railway object.
+    - ID
+    - filename
+    - distorted_image
+    - gps_pose
+    - GPS
     """
 
-    def __init__(self, id: int, Camera: Camera, distorted_annotations: bool = True):
+    def __init__(self, id: int):
         self.id = id
-        self.Camera = Camera
-        self.distorted_annotations = distorted_annotations
-
-        # Keyframe data: image & pose
         self.filename = self.__get_filename__()
         self.distorted_image = self.__get_image__()
-        self.image = Camera.undistort_image(self.distorted_image)
-        
         self.gps_pose = self.__get_gps_pose__()
 
-        # GPS object, which initialises related sub-objects (see gps.py)
-        self.GPS = GPS(self.gps_pose)
+        self.gps = GPS(self.gps_pose)
 
-        # Image object, which initialises related sub-objects (see image.py)
-        self.Image = Image(self.image)
-
-        self.Annotations = Annotations(self.image, self.Camera, self.filename, self.distorted_annotations)
-
-
-    """
-    Data imports for each keyframe
-    """
-    
     def __get_filename__(self, digits = 6) -> str:
         assert isinstance(self.id, int)
         assert len(str(self.id)) <= digits
@@ -64,19 +54,118 @@ class KeyFrame:
         return gps_pose
     
 
-def create_keyframes(ids: list[int], camera: Camera) -> list[KeyFrame]:
+class Keyframe(Frame):
     """
-    Create a list of keyframe objects of the same camera, discarding those with missing data.
+    Initialise more sophisticated Keyframe objects after having processed a Railway object.
+    - ID
+    - filename
+    - distorted_image
+    - gps_pose
+    - GPS: with local points in tracks
+        - GPS.local_tracks
+        - GPS.local_points_in_tracks
+    - Camera
+    - image
+    - Annotations
     """
-    keyframes: list[KeyFrame] = []
-    for id in ids:
-        id = int(id)
-        keyframe = KeyFrame(id, camera)
-        if keyframe.GPS.is_missing_data:
-            print("Keyframe #", id, "missing data >> skipped")
-            np.delete(ids, np.where(ids == id))
-            continue
-        # print("Keyframe #", id)
-        # print("Keyframe", id, "added")
-        keyframes.append(keyframe)
-    return keyframes
+
+    def __init__(self, id: int, Camera: 'Camera', railway: 'Railway', distorted_annotations: bool = True):
+
+        super().__init__(id)
+        self.Camera = Camera
+        self.image = Camera.undistort_image(self.distorted_image)
+
+        self.annotations = Annotations(self.image, self.Camera, self.filename, distorted_annotations)
+        
+        self.gps.__get_local_points_in_tracks__(railway)
+        self.points_gps_array, self.points_gps_list = self.__process_local_gps_points__()
+
+    
+    def __process_local_gps_points__(self, interpolate=True, int_spacing=0.05, int_smoothing=0.1,
+                                     filter_by_camera_angle=True, filter_angle=0.004,
+                                     separate_left_right=True):
+        """
+        - Processing of local points
+            - interpolate (default: True) with options for spacing and smoothing
+            - filter_by_camera_angle (default: True), with option for filter_angle
+            - separate_left_right tracks (default: True)
+        - Output:
+            - single array of points (default "single array") -- simple points used for optimisation
+            - list of tracks with points ("separate lists") -- better for distinguishing tracks
+        """
+
+        points_gps_array = np.empty((0,3))
+        points_gps_list: list[list[np.ndarray]] = []
+
+        for i, track in enumerate(self.gps.local_tracks):
+
+            points_w = self.gps.local_points_in_tracks[track]
+
+            # Transform to GPS frame and interpolate to increase density
+            points_gps = Transformation.transform_points(self.gps.H_gps_w, points_w)
+
+            if interpolate:
+                points_gps = Transformation.interpolate_spline(points_gps, desired_spacing=int_spacing, smoothing=int_smoothing, maximum=False)
+
+            if filter_by_camera_angle:
+                # Transform to camera frame and filter out points that are too close to each other
+                points_cam = Transformation.transform_points(self.Camera.H_cam_gps, points_gps)
+
+                previous_point = points_cam[-1]
+                for i in range(len(points_cam)-2, 0, -1):
+                    point = points_cam[i]
+                    if np.arccos(np.dot(point, previous_point) / (np.linalg.norm(point) * np.linalg.norm(previous_point))) < filter_angle:
+                        points_cam.pop(i)
+                    else:
+                        previous_point = points_cam[i]
+
+                # Transform back to GPS frame
+                points_gps = Transformation.transform_points(self.Camera.H_gps_cam, points_cam)
+
+            if separate_left_right:
+                points_gps_L, points_gps_R = Transformation.separate_track_into_left_right(points_gps)
+                points_gps_array_track = Transformation.convert_points_list(points_gps_L + points_gps_R, to_type="array")
+
+                points_gps_list.append(points_gps_L)
+                points_gps_list.append(points_gps_R)
+
+            else:
+                points_gps_array_track = Transformation.convert_points_list(points_gps, to_type="array")
+                points_gps_list.append(points_gps)
+
+            points_gps_array = np.append(points_gps_array, points_gps_array_track, axis=0)
+
+        return points_gps_array, points_gps_list
+        
+        
+    """
+    PUBLIC METHODS
+    """
+
+    def visualise_reprojected_points(self, visual: np.ndarray=None, color: tuple=(0,0,255)):
+        """
+        set color to "random" to get a different color for each track
+        """
+        if visual is None:
+            visual = self.image.copy()
+
+        for points_gps in self.points_gps_list:
+            if color == "random":
+                color_track = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+            else:
+                color_track = color
+            pixels = Transformation.project_points_to_pixels(self.Camera, self.Camera.H_cam_gps, points_gps)
+            Visualisation.draw_on_image(visual, pixels, False, color_track)
+        return visual
+        
+
+    def visualise_original_reprojected_points(self, visual: np.ndarray=None, color: tuple=(0,255,255)):
+        if visual is None:
+            visual = self.image.copy()
+
+        for track in self.gps.local_tracks:
+            points_w = self.gps.local_points_in_tracks[track]
+            points_gps = Transformation.transform_points(self.gps.H_gps_w, points_w)
+            pixels = Transformation.project_points_to_pixels(self.Camera, self.Camera.H_cam_gps, points_gps)
+            Visualisation.draw_on_image(visual, pixels, False, color)
+        return visual
