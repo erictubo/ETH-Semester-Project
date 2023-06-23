@@ -256,58 +256,38 @@ void SaveVisualisation(
 }
 
 
-struct Keyframe {
-    Keyframe(
-        const std::string filename,
-        const cv::Mat& image,
-        const std::vector<Eigen::Vector2d>& observed_2D_points,
-        const std::vector<Eigen::Vector3d>& gps_3D_points)
-        :
-        filename(filename),
-        image(image),
-        observed_2D_points(observed_2D_points),
-        gps_3D_points(gps_3D_points) {}
-
-    std::string filename;
-    cv::Mat image;
-    std::vector<Eigen::Vector2d> observed_2D_points;
-    std::vector<Eigen::Vector3d> gps_3D_points;
-};
-
-std::vector<Keyframe> keyframes;
-
-void cpp_add_keyframe(
-    const std::string filename,
-    const cv::Mat& image,
-    const std::vector<Eigen::Vector2d>& observed_2D_points,
-    const std::vector<Eigen::Vector3d>& gps_3D_points) {
-
-    struct Keyframe keyframe(filename, image, observed_2D_points, gps_3D_points);
-    keyframes.push_back(keyframe);
-}
-
-void cpp_reset_keyframes() {
-    keyframes.clear();
-}
 
 
-void cpp_update_camera_pose(
+
+// Above: same as before
+// Below: new for combined optimization of multiple keyframes
+
+
+
+
+void cpp_optimize_camera_pose(
     double camera_pose[7],
-    const double camera_intrinsics[4]) {
+    const double camera_intrinsics[4],
+    const std::vector<std::string> filenames,
+    const std::vector<cv::Mat> images,
+    const std::vector<std::vector<Eigen::Vector2d>> global_observed_2D_points,
+    const std::vector<std::vector<Eigen::Vector3d>> global_gps_3D_points) {
 
-    int num_keyframes = keyframes.size();
-    std::cout << "num_keyframes: " << num_keyframes << std::endl;
+    int num_keyframes = filenames.size();
+
 
     for (int iteration = 0; iteration < 10; ++iteration) {
 
         ceres::Problem problem;
 
-        for (const auto& keyframe : keyframes) {
+        // Combine all keyframes
+        for (int keyframe = 0; keyframe < num_keyframes; ++keyframe) {
 
-            const std::string& filename = keyframe.filename;
-            const cv::Mat& image = keyframe.image;
-            const std::vector<Eigen::Vector2d>& observed_2D_points = keyframe.observed_2D_points;
-            const std::vector<Eigen::Vector3d>& gps_3D_points = keyframe.gps_3D_points;
+            // Get references to data for current keyframe
+            const std::string& filename = filenames[keyframe];
+            const cv::Mat& image = images[keyframe];
+            const std::vector<Eigen::Vector2d>& observed_2D_points = global_observed_2D_points[keyframe];
+            const std::vector<Eigen::Vector3d>& gps_3D_points = global_gps_3D_points[keyframe];
 
             int num_observed_points = observed_2D_points.size();
             int num_reprojected_points = gps_3D_points.size();
@@ -362,45 +342,20 @@ void cpp_update_camera_pose(
 }
 
 
-void py_add_keyframe(
-    py::str filename,
-    py::array_t<uint8_t, py::array::c_style | py::array::forcecast> image,
-    py::array_t<double, py::array::c_style | py::array::forcecast> observed_2D_points,
-    py::array_t<double, py::array::c_style | py::array::forcecast> gps_3D_points) {
-
-    // Convert Python input types to C++ types
-    std::string filename_cpp = filename;
-
-    cv::Mat image_cpp(image.shape(0), image.shape(1), CV_MAKETYPE(CV_8U, image.shape(2)),
-                      const_cast<uint8_t*>(image.data()), image.strides(0));
-
-    const size_t num_observed_points = observed_2D_points.shape(0);
-    std::vector<Eigen::Vector2d> observed_2D_points_cpp(num_observed_points);
-    for (size_t i = 0; i < num_observed_points; ++i) {
-        Eigen::Map<Eigen::Vector2d> point(observed_2D_points.mutable_data(i, 0));
-        observed_2D_points_cpp[i] = point;
-    }
-
-    const size_t num_gps_points = gps_3D_points.shape(0);
-    std::vector<Eigen::Vector3d> gps_3D_points_cpp(num_gps_points);
-    for (size_t i = 0; i < num_gps_points; ++i) {
-        Eigen::Map<Eigen::Vector3d> point(gps_3D_points.mutable_data(i, 0));
-        gps_3D_points_cpp[i] = point;
-    }
-
-    // Call the C++ function
-    cpp_add_keyframe(filename_cpp, image_cpp, observed_2D_points_cpp, gps_3D_points_cpp);
-}
-
-
-void py_reset_keyframes() {
-    cpp_reset_keyframes();
-}
-
-
-py::array py_update_camera_pose(
+py::array py_optimize_camera_pose(
     py::array_t<double, py::array::c_style | py::array::forcecast> camera_pose,
-    py::array_t<double, py::array::c_style | py::array::forcecast> camera_intrinsics) {
+    py::array_t<double, py::array::c_style | py::array::forcecast> camera_intrinsics,
+
+    const py::list filenames,
+    const py::list images,
+    const py::list global_observed_2D_points,
+    const py::list global_gps_3D_points) {
+
+    // py::list<py::str> filenames,
+    // py::list<py::array_t<uint8_t, py::array::c_style | py::array::forcecast>> images,
+    // py::list<py::array_t<double, py::array::c_style | py::array::forcecast>> global_observed_2D_points,
+    // py::list<py::array_t<double, py::array::c_style | py::array::forcecast>> global_gps_3D_points) {
+
 
     if (camera_pose.shape()[0] != 7) {
         throw std::runtime_error("camera_pose must have 7 elements: [x, y, z, qx, qy, qz, qw]");
@@ -415,9 +370,32 @@ py::array py_update_camera_pose(
     double camera_pose_cpp[7];
     std::memcpy(camera_pose_cpp, camera_pose.data(), 7 * sizeof(double));
 
-    cpp_update_camera_pose(
-        camera_pose_cpp,
-        camera_intrinsics_cpp);
+
+
+    // // Iterate over all keyframes
+    // l.attr("pop")();
+    // std::cout << "List has length " << l.size() << std::endl;
+    // for (py::handle obj : l) {  // iterators!
+    //     std::cout << "  - " << obj.attr("__str__")().cast<std::string>() << std::endl;
+    // }
+
+
+    std::vector<std::string> filenames_cpp = filenames.cast<std::vector<std::string>>();
+    // std::vector<cv::Mat> images_cpp = images.cast<std::vector<cv::Mat>>();
+    // std::vector<std::vector<Eigen::Vector2d>> global_observed_2D_points_cpp = global_observed_2D_points.cast<std::vector<std::vector<Eigen::Vector2d>>>();
+    // std::vector<std::vector<Eigen::Vector3d>> global_gps_3D_points_cpp = global_gps_3D_points.cast<std::vector<std::vector<Eigen::Vector3d>>>();
+
+    // int num_keyframes = filenames.size();
+    // for (int keyframe = 0; keyframe < num_keyframes; ++keyframe) {
+    // }
+
+    // cpp_optimize_camera_pose(
+    //     camera_pose_cpp,
+    //     camera_intrinsics_cpp,
+    //     filenames_cpp,
+    //     images_cpp,
+    //     global_observed_2D_points_cpp,
+    //     global_gps_3D_points_cpp);
 
     // Convert back to numpy array
     py::array_t<double> final_camera_pose(7);
@@ -427,10 +405,59 @@ py::array py_update_camera_pose(
 }
 
 
-PYBIND11_MODULE(optimization, m) {
-    m.doc() = "C++ camera pose optimization of combined keyframes using Ceres";
 
-    m.def("add_keyframe", &py_add_keyframe, "Add a keyframe to the optimization problem");
-    m.def("reset_keyframes", &cpp_reset_keyframes, "Reset the optimization problem");
-    m.def("update_camera_pose", &py_update_camera_pose, "Optimize camera pose");
+
+
+struct Keyframe {
+    Keyframe(
+        const std::string filename,
+        const cv::Mat& image,
+        const std::vector<Eigen::Vector2d>& observed_2D_points,
+        const std::vector<Eigen::Vector3d>& gps_3D_points)
+        :
+        filename(filename),
+        image(image),
+        observed_2D_points(observed_2D_points),
+        gps_3D_points(gps_3D_points) {}
+
+    std::string filename;
+    cv::Mat image;
+    std::vector<Eigen::Vector2d> observed_2D_points;
+    std::vector<Eigen::Vector3d> gps_3D_points;
+};
+
+
+struct Optimization {
+
+    // Initialization
+    Optimization(
+        std::vector<double> camera_pose,
+        std::vector<double> camera_intrinsics)
+        :
+        camera_pose(camera_pose),
+        camera_intrinsics(camera_intrinsics) {}
+
+
+    // Method: add keyframe to struct
+    void add_keyframe(struct Keyframe keyframe) {
+        keyframes.push_back(keyframe);
+    }
+
+    // Struct members
+    std::vector<double> camera_pose;
+    const std::vector<double> camera_intrinsics;
+    std::vector<Keyframe> keyframes;
+};
+
+
+
+
+
+
+
+PYBIND11_MODULE(optimization, m) {
+    m.doc() = "Optimize camera pose using Ceres";
+    m.def("optimize_camera_pose", &py_optimize_camera_pose, "Optimize camera pose");
+
+
 }

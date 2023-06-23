@@ -16,10 +16,9 @@ from railway import Railway
 from keyframe import Frame, Keyframe
 from transformation import Transformation
 
-
 src_path = os.path.abspath('../LROD_extrinsics_estimation/src')
 sys.path.append(src_path)
-from cpp.optimization import optimize_camera_pose
+import cpp.optimization
 
 
 """
@@ -134,9 +133,9 @@ else:
 
 
 """
-Visualisation of pre-processed railway in 2D and 3D
+Visualization of pre-processed railway in 2D and 3D
 """
-if input("Visualise railway? [y/n]: ") == 'y':
+if input("Visualize railway? [y/n]: ") == 'y':
     if not frames:
         frames = create_frames(frame_ids)
     if input("2D? [y/n] ") == 'y':
@@ -146,75 +145,43 @@ if input("Visualise railway? [y/n]: ") == 'y':
 
 
 """
-Sparse keyframes for optimisation -- subset of prior frames
+Sparse keyframes for optimization -- subset of prior frames
 """
 keyframe_ids = [325, 450, 600, 775, 1025, 1225, 1650, 1800, 1900]
-keyframe_ids = [1900, 775, 1800, 1650, 600]
+# keyframe_ids = [1900, 775, 1800, 1650, 600]
 
 for keyframe_id in keyframe_ids:
     assert keyframe_id in frame_ids, "Keyframe ID not in frame IDs"
 
-
-
-# TODO: create keyframes for each camera, then optimise each camera separately
-
 keyframes = create_keyframes(keyframe_ids, camera_1, railway)
 
-"""
-Optimisation: iterative closest points
-"""
-print("Optimising camera pose")
 
-# TODO: optimise camera pose using combined keyframes (per camera) through multiple iterations
+"""
+Optimization: iterative closest points
+"""
+print("Optimizing camera pose")
 
 for camera in [camera_1]:
 
-    # Things to pass onto C++
-    # - camera: intrinsics
-    # - camera: initial pose
-    # - collection of keyframes:
-    #   - filename
-    #   - image
-    #   - annotations
-    #   - GPS points
+    cpp.optimization.reset_keyframes()
 
-    # How to do this using more complex data types?
+    for keyframe in keyframes:
+        assert keyframe.camera == camera, "Keyframe camera does not match camera being optimized"
 
+        cpp.optimization.add_keyframe(
+            keyframe.filename,
+            np.asarray(keyframe.image),
+            keyframe.annotations.array,
+            keyframe.points_gps_array)
 
-    # # 1. Initialise with global data: camera intrinsics & initial pose
-    # initialize_optimization(camera.intrinsics_vector, camera.pose_vector)
+    new_camera_pose = cpp.optimization.update_camera_pose(camera.pose_vector, camera.intrinsics_vector)
 
-    # # 2. Add all keyframes
-    # for keyframe in keyframes:
-    #     add_keyframe_to_optimization(keyframe.filename, keyframe.image, keyframe.annotations, keyframe.points_gps_array)
+    camera.update_pose(new_camera_pose)
 
-    # # 3. Iterate with current camera pose:
-    # #    - add residuals of all keyframes to problem
-    # #    - update camera pose
-    # #    - repeat until convergence
-    # new_camera_pose = optimize_camera_pose()
-
-    # # 3. Return final camera pose
-
-    
-    """
-    OLD METHOD PER KEYFRAME:
-    """
-
-    # Call ceres solver
-    # new_camera_pose = optimize_camera_pose(keyframe.filename,
-    #                                        np.asarray(keyframe.image),
-    #                                        keyframe.annotations.array,
-    #                                        keyframe.points_gps_array,
-    #                                        keyframe.camera.intrinsics_vector,
-    #                                        keyframe.camera.pose_vector)
-
-    # keyframe.camera.update_pose(new_camera_pose)
-
-
-    print("Final pose of camera", camera.id)
-    print("Pose vector [t, q]:", camera.pose_vector)
-    print("H_gps_cam: R, t", camera.H_gps_cam[0:3, 0:3], camera.H_gps_cam[0:3, 3])
+    print("Final pose of camera", camera.id, ":")
+    print("Pose vector [t_cam_gps, quaternion]:\n", camera.pose_vector)
+    print("R_gps_cam:\n", camera.H_gps_cam[0:3, 0:3])
+    print("t_gps_cam:\n", camera.H_gps_cam[0:3, 3])
 
 
 """

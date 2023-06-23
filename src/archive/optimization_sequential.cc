@@ -248,96 +248,57 @@ void DrawCorrespondences(
 
 void SaveVisualisation(
     const cv::Mat& visualisation,
-    const std::string& filename,
-    const int& iteration) {
+    const std::string filename,
+    const int iteration) {
     
     std::string path = "/Users/eric/Developer/Cam2GPS/visualisation/optimization/" + filename + "_it_" + std::to_string(iteration) + ".png";
     cv::imwrite(path, visualisation);
 }
 
 
-struct Keyframe {
-    Keyframe(
-        const std::string filename,
-        const cv::Mat& image,
-        const std::vector<Eigen::Vector2d>& observed_2D_points,
-        const std::vector<Eigen::Vector3d>& gps_3D_points)
-        :
-        filename(filename),
-        image(image),
-        observed_2D_points(observed_2D_points),
-        gps_3D_points(gps_3D_points) {}
-
-    std::string filename;
-    cv::Mat image;
-    std::vector<Eigen::Vector2d> observed_2D_points;
-    std::vector<Eigen::Vector3d> gps_3D_points;
-};
-
-std::vector<Keyframe> keyframes;
-
-void cpp_add_keyframe(
+void cpp_optimize_camera_pose(
     const std::string filename,
     const cv::Mat& image,
     const std::vector<Eigen::Vector2d>& observed_2D_points,
-    const std::vector<Eigen::Vector3d>& gps_3D_points) {
+    const std::vector<Eigen::Vector3d>& gps_3D_points,
+    const double camera_intrinsics[4],
+    double camera_pose[7]) {
 
-    struct Keyframe keyframe(filename, image, observed_2D_points, gps_3D_points);
-    keyframes.push_back(keyframe);
-}
+    const size_t num_reprojected_points = gps_3D_points.size();
+    const size_t num_observed_points = observed_2D_points.size();
 
-void cpp_reset_keyframes() {
-    keyframes.clear();
-}
+    std::vector<Eigen::Vector2d> reprojected_2D_points(num_reprojected_points);
+    std::vector<int> correspondence_indices(num_observed_points);
 
+    // multiple ICP iterations with correspondence index updates
+    for (int iteration = 0; iteration < 25; ++iteration) {
 
-void cpp_update_camera_pose(
-    double camera_pose[7],
-    const double camera_intrinsics[4]) {
+        // Reproject GPS points
+        ReprojectPoints(image, camera_intrinsics, camera_pose, gps_3D_points, reprojected_2D_points);
 
-    int num_keyframes = keyframes.size();
-    std::cout << "num_keyframes: " << num_keyframes << std::endl;
+        // Find correspondences per observed point: which reprojected point is closest?
+        FindCorrespondences(observed_2D_points, reprojected_2D_points, correspondence_indices);
 
-    for (int iteration = 0; iteration < 10; ++iteration) {
-
+        // Create problem
         ceres::Problem problem;
 
-        for (const auto& keyframe : keyframes) {
+        // Add residuals to problem
+        for (size_t i = 0; i < num_observed_points; ++i) {
 
-            const std::string& filename = keyframe.filename;
-            const cv::Mat& image = keyframe.image;
-            const std::vector<Eigen::Vector2d>& observed_2D_points = keyframe.observed_2D_points;
-            const std::vector<Eigen::Vector3d>& gps_3D_points = keyframe.gps_3D_points;
+            if (correspondence_indices[i] != -1) {
+                ceres::CostFunction* cost_function = CameraProjectionCostFunctor::Create(
+                    observed_2D_points[i],
+                    gps_3D_points[correspondence_indices[i]],
+                    camera_intrinsics);
 
-            int num_observed_points = observed_2D_points.size();
-            int num_reprojected_points = gps_3D_points.size();
-
-            // Reproject GPS points
-            std::vector<Eigen::Vector2d> reprojected_2D_points(num_reprojected_points);
-            ReprojectPoints(image, camera_intrinsics, camera_pose, gps_3D_points, reprojected_2D_points);
-
-            // Find correspondences per observed point: which reprojected point is closest?
-            std::vector<int> correspondence_indices(num_observed_points);
-            FindCorrespondences(observed_2D_points, reprojected_2D_points, correspondence_indices);
-
-            // Visualise and save
-            cv::Mat visualisation = image.clone();
-            DrawCorrespondences(correspondence_indices, observed_2D_points, reprojected_2D_points, visualisation);
-            SaveVisualisation(visualisation, filename, iteration);
-
-            // Add residuals to problem
-            for (size_t i = 0; i < num_observed_points; ++i) {
-
-                if (correspondence_indices[i] != -1) {
-                    ceres::CostFunction* cost_function = CameraProjectionCostFunctor::Create(
-                        observed_2D_points[i],
-                        gps_3D_points[correspondence_indices[i]],
-                        camera_intrinsics);
-
-                    problem.AddResidualBlock(cost_function, nullptr, camera_pose);
-                }
+                problem.AddResidualBlock(cost_function, nullptr, camera_pose);
             }
         }
+
+        cv::Mat visualisation = image.clone();
+        DrawCorrespondences(correspondence_indices, observed_2D_points, reprojected_2D_points, visualisation);
+        SaveVisualisation(visualisation, filename, iteration);
+        
         // Configure the solver
         ceres::Solver::Options options;
         options.minimizer_type = ceres::MinimizerType::TRUST_REGION;
@@ -362,13 +323,30 @@ void cpp_update_camera_pose(
 }
 
 
-void py_add_keyframe(
+py::array py_optimize_camera_pose(
     py::str filename,
     py::array_t<uint8_t, py::array::c_style | py::array::forcecast> image,
     py::array_t<double, py::array::c_style | py::array::forcecast> observed_2D_points,
-    py::array_t<double, py::array::c_style | py::array::forcecast> gps_3D_points) {
+    py::array_t<double, py::array::c_style | py::array::forcecast> gps_3D_points,
+    py::array_t<double, py::array::c_style | py::array::forcecast> camera_intrinsics,
+    py::array_t<double, py::array::c_style | py::array::forcecast> camera_pose) {
 
-    // Convert Python input types to C++ types
+    // Check input dimensions
+    if (observed_2D_points.shape()[1] != 2) {
+        throw std::runtime_error("observed_2D_points must have 2 columns: [u, v]");
+    }
+    if (gps_3D_points.shape()[1] != 3) {
+        throw std::runtime_error("gps_3D_points must have 3 columns: [x, y, z]");
+    }
+    if (camera_intrinsics.shape()[0] != 4) {
+        throw std::runtime_error("camera_intrinsics must have 4 elements: [fx, fy, cx, cy]");
+    }
+    if (camera_pose.shape()[0] != 7) {
+        throw std::runtime_error("camera_pose must have 7 elements: [x, y, z, qx, qy, qz, qw]");
+    }
+
+
+    // Convert inputs to C++ types
     std::string filename_cpp = filename;
 
     cv::Mat image_cpp(image.shape(0), image.shape(1), CV_MAKETYPE(CV_8U, image.shape(2)),
@@ -388,49 +366,24 @@ void py_add_keyframe(
         gps_3D_points_cpp[i] = point;
     }
 
-    // Call the C++ function
-    cpp_add_keyframe(filename_cpp, image_cpp, observed_2D_points_cpp, gps_3D_points_cpp);
-}
-
-
-void py_reset_keyframes() {
-    cpp_reset_keyframes();
-}
-
-
-py::array py_update_camera_pose(
-    py::array_t<double, py::array::c_style | py::array::forcecast> camera_pose,
-    py::array_t<double, py::array::c_style | py::array::forcecast> camera_intrinsics) {
-
-    if (camera_pose.shape()[0] != 7) {
-        throw std::runtime_error("camera_pose must have 7 elements: [x, y, z, qx, qy, qz, qw]");
-    }
-    if (camera_intrinsics.shape()[0] != 4) {
-        throw std::runtime_error("camera_intrinsics must have 4 elements: [fx, fy, cx, cy]");
-    }
-
     double camera_intrinsics_cpp[4];
     std::memcpy(camera_intrinsics_cpp, camera_intrinsics.data(), 4 * sizeof(double));
 
     double camera_pose_cpp[7];
     std::memcpy(camera_pose_cpp, camera_pose.data(), 7 * sizeof(double));
 
-    cpp_update_camera_pose(
-        camera_pose_cpp,
-        camera_intrinsics_cpp);
+    // Optimise camera pose
+    cpp_optimize_camera_pose(filename_cpp, image_cpp, observed_2D_points_cpp, gps_3D_points_cpp, camera_intrinsics_cpp, camera_pose_cpp);
 
     // Convert back to numpy array
-    py::array_t<double> final_camera_pose(7);
-    std::memcpy(final_camera_pose.mutable_data(), camera_pose_cpp, 7 * sizeof(double)); 
+    py::array_t<double> camera_pose_out(7);
+    std::memcpy(camera_pose_out.mutable_data(), camera_pose_cpp, 7 * sizeof(double)); 
 
-    return final_camera_pose;
+    return camera_pose_out;
 }
 
 
 PYBIND11_MODULE(optimization, m) {
-    m.doc() = "C++ camera pose optimization of combined keyframes using Ceres";
-
-    m.def("add_keyframe", &py_add_keyframe, "Add a keyframe to the optimization problem");
-    m.def("reset_keyframes", &cpp_reset_keyframes, "Reset the optimization problem");
-    m.def("update_camera_pose", &py_update_camera_pose, "Optimize camera pose");
+    m.doc() = "Optimize camera pose using Ceres";
+    m.def("optimize_camera_pose", &py_optimize_camera_pose, "Optimize camera pose");
 }
