@@ -69,13 +69,13 @@ class Keyframe(Frame):
     - Annotations
     """
 
-    def __init__(self, id: int, Camera: 'Camera', railway: 'Railway', distorted_annotations: bool = True):
+    def __init__(self, id: int, camera: 'Camera', railway: 'Railway', distorted_annotations: bool = True):
 
         super().__init__(id)
-        self.Camera = Camera
-        self.image = Camera.undistort_image(self.distorted_image)
+        self.camera = camera
+        self.image = camera.undistort_image(self.distorted_image)
 
-        self.annotations = Annotations(self.image, self.Camera, self.filename, distorted_annotations)
+        self.annotations = Annotations(self.image, self.camera, self.filename, distorted_annotations)
         
         self.gps.__get_local_points_in_tracks__(railway)
         self.points_gps_array, self.points_gps_list = self.__process_local_gps_points__()
@@ -109,7 +109,7 @@ class Keyframe(Frame):
 
             if filter_by_camera_angle:
                 # Transform to camera frame and filter out points that are too close to each other
-                points_cam = Transformation.transform_points(self.Camera.H_cam_gps, points_gps)
+                points_cam = Transformation.transform_points(self.camera.H_cam_gps, points_gps)
 
                 previous_point = points_cam[-1]
                 for i in range(len(points_cam)-2, 0, -1):
@@ -120,7 +120,7 @@ class Keyframe(Frame):
                         previous_point = points_cam[i]
 
                 # Transform back to GPS frame
-                points_gps = Transformation.transform_points(self.Camera.H_gps_cam, points_cam)
+                points_gps = Transformation.transform_points(self.camera.H_gps_cam, points_cam)
 
             if separate_left_right:
                 points_gps_L, points_gps_R = Transformation.separate_track_into_left_right(points_gps)
@@ -154,7 +154,7 @@ class Keyframe(Frame):
                 color_track = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
             else:
                 color_track = color
-            pixels = Transformation.project_points_to_pixels(self.Camera, self.Camera.H_cam_gps, points_gps)
+            pixels = Transformation.project_points_to_pixels(self.camera, self.camera.H_cam_gps, points_gps)
             Visualisation.draw_on_image(visual, pixels, False, color_track)
         return visual
         
@@ -166,6 +166,6 @@ class Keyframe(Frame):
         for track in self.gps.local_tracks:
             points_w = self.gps.local_points_in_tracks[track]
             points_gps = Transformation.transform_points(self.gps.H_gps_w, points_w)
-            pixels = Transformation.project_points_to_pixels(self.Camera, self.Camera.H_cam_gps, points_gps)
+            pixels = Transformation.project_points_to_pixels(self.camera, self.camera.H_cam_gps, points_gps)
             Visualisation.draw_on_image(visual, pixels, False, color)
         return visual
