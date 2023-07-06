@@ -72,13 +72,14 @@ class Railway:
         self.railway_map.plotly(plotly.graph_objs.Figure())
 
     
-    def visualise_2D(self, frames: list['Frame'] = []):
-
-        for track in self.tracks:
-            for point in self.points_in_tracks_2D[track]:
-                Visualisation.plot_XY(point[0], point[1], 'orange')
-        for node in self.nodes:
-            Visualisation.plot_XY(node.x, node.y, color='red')
+    def visualise_2D(self, show_tracks=True, show_nodes=True, frames: list['Frame'] = []):
+        if show_tracks:
+            for track in self.tracks:
+                for point in self.points_in_tracks_2D[track]:
+                    Visualisation.plot_XY(point[0], point[1], 'orange')
+        if show_nodes:
+            for node in self.nodes:
+                Visualisation.plot_XY(node.x, node.y, color='red')
         for frame in frames:
             point = frame.gps.t_w_gps
             Visualisation.plot_XY(point[0], point[1], 'black')
@@ -97,7 +98,6 @@ class Railway:
             point = frame.gps.t_w_gps
             Visualisation.plot_3D_points(ax, [point], 'red')
         Visualisation.show_plot()
-
 
 
     # Hidden methods: called at initialisation

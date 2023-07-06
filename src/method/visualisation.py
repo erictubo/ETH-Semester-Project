@@ -103,10 +103,11 @@ class Visualisation:
         return ax
     
     @staticmethod
-    def plot_XY(X, Y, color: str='blue', scale = 'equal'):
-        plt.axis('equal')
-        plt.scatter(X, Y, c=color)
-
+    def plot_XY(X, Y, color: str='blue', scale='equal'):
+        if scale=='equal':
+            plt.axis('equal')
+        # smaller point size
+        plt.scatter(X, Y, c=color, s=3)
 
     """
     3D Plots

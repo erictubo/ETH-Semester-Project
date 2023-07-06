@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 class GPS:
 
-    def __init__(self, pose):
+    def __init__(self, pose, include_elevation=True):
 
         self.is_missing_data = False
 
@@ -40,8 +40,14 @@ class GPS:
         self.H_w_gps = Transformation.compile_homogeneous_transformation(self.R_w_gps, self.t_w_gps)
         self.H_gps_w = Transformation.invert_homogeneous_transformation(self.H_w_gps)
 
+        self.angles_rad = Transformation.convert_quaternions(self.quaternions, to_type='euler angles')
+        self.angles_deg = self.angles_rad * 180 / np.pi
+
         # Extracted map information
-        self.elevation = MapInfo.get_elevation(self.x_w_gps, self.y_w_gps)
+        if include_elevation:
+            self.elevation = MapInfo.get_elevation(self.x_w_gps, self.y_w_gps)
+        else:
+            self.elevation = None
 
 
     @staticmethod

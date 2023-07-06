@@ -293,12 +293,13 @@ void cpp_reset_keyframes() {
 
 void cpp_update_camera_pose(
     double camera_pose[7],
-    const double camera_intrinsics[4]) {
+    const double camera_intrinsics[4],
+    int iterations) {
 
     int num_keyframes = keyframes.size();
     std::cout << "num_keyframes: " << num_keyframes << std::endl;
 
-    for (int iteration = 0; iteration < 10; ++iteration) {
+    for (int iteration = 0; iteration < iterations; ++iteration) {
 
         ceres::Problem problem;
 
@@ -343,8 +344,9 @@ void cpp_update_camera_pose(
         options.minimizer_type = ceres::MinimizerType::TRUST_REGION;
             // idea: solver type Suite Sparse
         // options.trust_region_strategy_type = ceres::TrustRegionStrategyType::LEVENBERG_MARQUARDT;
-        // options.linear_solver_type = ceres::LinearSolverType::DENSE_QR;
+        options.linear_solver_type = ceres::LinearSolverType::DENSE_QR;
             // sparse normal Koleski
+        // options.linear_solver_type = ceres::LinearSolverType::SPARSE_NORMAL_CHOLESKY;
         options.minimizer_progress_to_stdout = true;
         options.sparse_linear_algebra_library_type = ceres::SparseLinearAlgebraLibraryType::SUITE_SPARSE;
 
@@ -400,7 +402,8 @@ void py_reset_keyframes() {
 
 py::array py_update_camera_pose(
     py::array_t<double, py::array::c_style | py::array::forcecast> camera_pose,
-    py::array_t<double, py::array::c_style | py::array::forcecast> camera_intrinsics) {
+    py::array_t<double, py::array::c_style | py::array::forcecast> camera_intrinsics,
+    py::int_ iterations) {
 
     if (camera_pose.shape()[0] != 7) {
         throw std::runtime_error("camera_pose must have 7 elements: [x, y, z, qx, qy, qz, qw]");
@@ -415,9 +418,13 @@ py::array py_update_camera_pose(
     double camera_pose_cpp[7];
     std::memcpy(camera_pose_cpp, camera_pose.data(), 7 * sizeof(double));
 
+    int iterations_cpp;
+    iterations_cpp = iterations;
+
     cpp_update_camera_pose(
         camera_pose_cpp,
-        camera_intrinsics_cpp);
+        camera_intrinsics_cpp,
+        iterations_cpp);
 
     // Convert back to numpy array
     py::array_t<double> final_camera_pose(7);

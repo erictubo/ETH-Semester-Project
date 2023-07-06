@@ -6,7 +6,7 @@ import csv
 import cv2
 
 #from image import Image
-from data import annotations_file
+from data import path_to_annotations_0, path_to_annotations_1
 from transformation import Transformation
 from camera import Camera
 from visualisation import Visualisation
@@ -30,7 +30,17 @@ class Annotations():
 
     def __read_pixel_sequences_from_csv__(self, filename):
 
+        """
+        Filename: 6-digit integer identifier of frame.
+        """
+
         pixel_sequences: list[list[np.ndarray]] = []
+
+        if self.camera.id == 0:
+            path_to_annotations = path_to_annotations_0
+        elif self.camera.id == 1:
+            path_to_annotations = path_to_annotations_1
+        annotations_file = path_to_annotations + 'annotations.csv'
 
         with open(annotations_file) as csv_file:
             for row in csv.reader(csv_file):
@@ -78,12 +88,20 @@ class Annotations():
 
     # Public methods
 
-    def visualise(self, visual=None, annotations_color: tuple=(255,255,0), spline_color: tuple=(255,0,0)):
+    def visualise_points(self, visual=None, color: tuple=(255,255,0)):
 
         if visual is None:
             visual = self.image.copy()
 
-        for spline, pixel_sequence in zip(self.splines, self.pixel_sequences):
-            Visualisation.draw_on_image(visual, spline, False, spline_color)
-            Visualisation.draw_on_image(visual, pixel_sequence, False, annotations_color)
+        for pixel_sequence in self.pixel_sequences:
+            Visualisation.draw_on_image(visual, pixel_sequence, False, color)
         return visual
+    
+    def visualise_splines(self, visual=None, color: tuple=(255,0,0)):
+        if visual is None:
+            visual = self.image.copy()
+
+        for spline in self.splines:
+            Visualisation.draw_on_image(visual, spline, False, color)
+        return visual
+                        

@@ -34,7 +34,8 @@ class Transformation:
     def separate_homogeneous_transformation(H: np.ndarray):
         """
         Separates a homogeneous transformation matrix (4,4)
-        into its translation vector t (3,) and rotation matrix R (3,3).
+        into its rotation matrix R (3,3) and translation vector t (3,).\n
+        Output: R (3,3), t (3,)
         """
         assert H.shape == (4,4), H.shape
         R = H[0:3, 0:3]
@@ -115,11 +116,11 @@ class Transformation:
         assert quaternions.shape == (4,), quaternions.shape
         rotation = Rotation.from_quat(quaternions)
 
-        if to_type == "rotation matrix" or "matrix":
+        if to_type == "rotation matrix":
             rotation_matrix = rotation.as_matrix().squeeze()
             assert rotation_matrix.shape == (3,3), rotation_matrix.shape
             return rotation_matrix
-        elif to_type == "euler angles" or "euler":
+        elif to_type == "euler angles":
             euler_angles = rotation.as_euler('zyx')
             assert euler_angles.shape == (3,), euler_angles.shape
             return euler_angles
@@ -127,14 +128,14 @@ class Transformation:
             raise ValueError("Unknown conversion type: " + str(to_type))
 
     @staticmethod
-    def convert_rotation_matrix(rotation_matrix, to_type: str = "quaternions"):
+    def convert_rotation_matrix(rotation_matrix, to_type: str = "quaternion"):
         """
         Converts rotation matrix to other specified parametrisation: "quaternions" (xyzw) (default) or "euler angles"
         """
         assert rotation_matrix.shape == (3,3), rotation_matrix.shape
         rotation = Rotation.from_matrix(rotation_matrix)
 
-        if to_type == "quaternions":
+        if to_type == "quaternion":
             quaternions = rotation.as_quat().squeeze()
             assert quaternions.shape == (4,), quaternions.shape
             return quaternions
