@@ -6,7 +6,7 @@ import cv2
 import yaml
 import random
 
-from data import path_to_images, path_to_poses
+from data import path_to_images_0, path_to_images_1, path_to_poses
 
 from gps import GPS
 from annotations import Annotations
@@ -28,13 +28,14 @@ class Frame:
     - GPS
     """
 
-    def __init__(self, id: int):
+    def __init__(self, id: int, camera: 'Camera', include_elevation=True):
         self.id = id
+        self.camera = camera
         self.filename = self.__get_filename__()
         self.distorted_image = self.__get_image__()
         self.gps_pose = self.__get_gps_pose__()
 
-        self.gps = GPS(self.gps_pose)
+        self.gps = GPS(self.gps_pose, include_elevation)
 
     def __get_filename__(self, digits = 6) -> str:
         assert isinstance(self.id, int)
@@ -44,6 +45,10 @@ class Frame:
         return filename
 
     def __get_image__(self):
+        if self.camera.id == 0:
+            path_to_images = path_to_images_0
+        elif self.camera.id == 1:
+            path_to_images = path_to_images_1
         image_path = path_to_images + str(self.filename) + '.jpg'
         image = cv2.imread(image_path)
         return image
@@ -71,7 +76,7 @@ class Keyframe(Frame):
 
     def __init__(self, id: int, camera: 'Camera', railway: 'Railway', distorted_annotations: bool = True):
 
-        super().__init__(id)
+        super().__init__(id=id, camera=camera, include_elevation=True)
         self.camera = camera
         self.image = camera.undistort_image(self.distorted_image)
 

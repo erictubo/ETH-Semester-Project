@@ -7,6 +7,7 @@ import sys
 import pickle
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 
 # Methods & Data
 from data import railway_object_file
@@ -34,7 +35,7 @@ H_gps_camf = Transformation.compile_homogeneous_transformation(R_gps_camf, t_gps
 # offset_camf_cam = [0, -1.70, 0]
 # angles_camf_cam = [-0.00, -0.01, 0.0]
 
-offset_camf_cam = [0., -2., -10.]
+offset_camf_cam = [0., -1.5, -8.]
 angles_camf_cam = [0., 0., 0.]
 
 # Median estimates from report:
@@ -60,34 +61,35 @@ Camera parameters:
   assuming the keyframes are initiallised with the correct corresponding cameras
 """
 
-camera_1 = Camera(1, image_size = (1920, 1200),
+camera_0 = Camera(0, image_size = (1920, 1200),
                   focal_length = [2*698.8258566937119, 2*698.6495855393557], 
                   principal_point = [2*492.9705850660823, 2*293.3927615928415], 
                   distortion_coefficients = [0.15677829213401465, 0.1193983032005652, -0.011287926707786692, 0.23013426724923478],
                   initial_H_gps_cam=initial_H_gps_cam)
 
-# camera_2 = Camera(2, image_size = (1920, 1200),
-#                   focal_length = [2*698.5551622016458, 2*698.6714179616163],
-#                   principal_point = [2*489.7761220331873, 2*297.9103051604121],
-#                   distortion_coefficients = [0.16213733886648546, 0.11615082942281711, -0.05779296718987261, 0.324051803251489],
-#                   initial_H_gps_cam=initial_H_gps_cam_1
-#                   )
+camera_1 = Camera(1, image_size = (1920, 1200),
+                  focal_length = [2*698.5551622016458, 2*698.6714179616163],
+                  principal_point = [2*489.7761220331873, 2*297.9103051604121],
+                  distortion_coefficients = [0.16213733886648546, 0.11615082942281711, -0.05779296718987261, 0.324051803251489],
+                  initial_H_gps_cam=initial_H_gps_cam)
 
 
-def create_frames(ids: list[int]) -> list[Frame]:
+cameras = [camera_0, camera_1]
+
+
+def create_frames(ids: list[int], camera: Camera, include_elevation=True) -> list[Frame]:
     """
     Create a list of basic frames for processing of the Railway object.
     """
     frames: list[Frame] = []
     for id in ids:
         id = int(id)
-        frame = Frame(id)
+        frame = Frame(id, camera, include_elevation)
         if frame.gps.is_missing_data:
             print("Frame #", id, "missing data >> skipped")
             np.delete(ids, np.where(ids == id))
             continue
-        # print("Frame #", id)
-        # print("Frame", id, "added")
+        print("Frame #", id, "created")
         frames.append(frame)
     return frames
 
@@ -105,13 +107,15 @@ def create_keyframes(ids: list[int], camera: Camera, railway: Railway) -> list[K
             print("Keyframe #", id, "missing data >> skipped")
             np.delete(ids, np.where(ids == id))
             continue
+        print("Keyframe #", id, "created")
         keyframes.append(keyframe)
     return keyframes
 
 """
 Dense frames for Railway processing
 """
-frame_ids = np.arange(0, 1928, 25)
+frame_ids = np.arange(0, 5495, 10)
+# frame_ids = np.arange(4000, 4300, 1)
 
 """
 Railway object: process new (and save to file) or load existing
@@ -121,7 +125,7 @@ r_ahead = 100
 r_behind = 50
 
 if (not os.path.isfile(railway_object_file)) or (input("Create a new railway object? [y/n]: ") == 'y'):
-    frames = create_frames(frame_ids)
+    frames = create_frames(frame_ids, include_elevation=False)
     railway = Railway(frames, max_gap=max_gap, r_ahead=r_ahead, r_behind=r_behind)
     with open(railway_object_file, 'wb') as file:
         pickle.dump(railway, file)
@@ -132,28 +136,118 @@ else:
         railway = pickle.load(file)
 
 
+# railway.plot_map()
+
 """
 Visualization of pre-processed railway in 2D and 3D
 """
-if input("Visualize railway? [y/n]: ") == 'y':
-    if not frames:
-        frames = create_frames(frame_ids)
+if input("Visualize railway / frames? [y/n]: ") == 'y':
     if input("2D? [y/n] ") == 'y':
-        railway.visualise_2D(frames)
+        frames = create_frames(frame_ids, camera_0, include_elevation=False)
+        railway.visualise_2D(show_tracks=False, frames=[])
+        railway.visualise_2D(show_tracks=True, frames=[])
+
+    if input("GPS Height vs. Elevation? [y/n] ") == 'y':
+        frames = create_frames(frame_ids, camera_0, include_elevation=True)
+        # for frame in frames:
+        #     point = frame.gps.t_w_gps
+        #     plt.scatter(frame.id, point[2], s=3, c='black')
+        #     plt.scatter(frame.id, frame.gps.elevation, s=3, c='red')
+        #     plt.grid(color='grey', linestyle='-', linewidth=0.5, alpha=0.5)
+        #     plt.xticks(np.arange(0, 5500, 500))
+        #     plt.yticks(np.arange(30, 45, 1))
+        #     plt.xlabel("Frame ID")
+        #     plt.ylabel("Height [m]")
+        #     plt.legend(["GPS height", "Local elevation"])
+        # plt.show()
+        
+        for frame in frames:
+            point = frame.gps.t_w_gps
+            plt.scatter(frame.id, point[2], s=3, c='blue')
+            plt.scatter(frame.id, frame.gps.elevation, s=3, c='red')
+            plt.xticks(np.arange(4000, 4500, 100))
+            # plt.yticks(np.arange(33, 37, 0.2))
+            plt.xlabel("Frame ID")
+            plt.ylabel("Height [m]")
+            plt.legend(["GPS height", "Local elevation"])
+        plt.show()
+    
+    if input("GPS Rotation? [y/n] ") == 'y':
+        frames = create_frames(frame_ids, camera_0, include_elevation=False)
+
+        yaw_0 = frames[0].gps.angles_deg[0]
+        pitch_0 = frames[0].gps.angles_deg[1]
+        roll_0 = frames[0].gps.angles_deg[2]
+
+        yaw_0 = 0
+        pitch_0 = 0
+        roll_0 = 0
+
+        for frame in frames:
+            yaw = frame.gps.angles_deg[0] - yaw_0
+            pitch = frame.gps.angles_deg[1] - pitch_0
+            roll = frame.gps.angles_deg[2] - roll_0
+
+            plt.scatter(frame.id, roll, s=3, c='red')
+            plt.scatter(frame.id, pitch, s=3, c='green')
+            plt.scatter(frame.id, yaw, s=3, c='blue')
+            # plt.grid(color='grey', linestyle='-', linewidth=0.5, alpha=0.5)
+            plt.xlabel("Frame ID")
+            plt.ylabel("Rotation [deg]")
+            plt.legend(["Roll", "Pitch", "Yaw"])
+        plt.show()
+
     if input("3D? [y/n] ") == 'y':
+        frames = create_frames(frame_ids, camera_0, include_elevation=True)
         railway.visualise_3D(frames)
+
+    if input("Continue to optimize camera pose? [y/n]: ") == 'n':
+        exit()
 
 
 """
 Sparse keyframes for optimization -- subset of prior frames
 """
-keyframe_ids = [325, 450, 600, 775, 1025, 1225, 1650, 1800, 1900]
-# keyframe_ids = [1900, 775, 1800, 1650, 600]
+# keyframe_ids = [780, 1090, 1430, 2770, 3110, 4500, 5410, 5420, 5430, 5440, 5450, 5460, 5470, 5480]
+# keyframe_ids = [780, 3110, 5410]
+# keyframe_ids = [5410, 5420, 5430, 5440, 5450, 5460, 5470, 5480]
+# keyframe_ids = [5410, 5420, 5430]
+# keyframe_ids = [5410, 5420, 5430]
+# keyframe_ids = [780, 1090, 1430]
+keyframe_ids = [490, 570, 950]
+keyframe_ids = [570, 950]
+# keyframe_ids = [5410]
 
-for keyframe_id in keyframe_ids:
-    assert keyframe_id in frame_ids, "Keyframe ID not in frame IDs"
+# for keyframe_id in keyframe_ids:
+#     assert keyframe_id in frame_ids, "Keyframe ID not in frame IDs"
 
-keyframes = create_keyframes(keyframe_ids, camera_1, railway)
+keyframes_0 = create_keyframes(keyframe_ids, camera_0, railway)
+keyframes_1 = create_keyframes(keyframe_ids, camera_1, railway)
+
+keyframes = keyframes_0 + keyframes_1
+
+
+"""
+Initial reprojection of keyframes
+"""
+print("Reprojecting points using initial camera pose")
+
+for i, keyframe in enumerate(keyframes):
+
+    annotated_visual = keyframe.annotations.visualise_points()
+    annotated_visual = keyframe.annotations.visualise_splines(annotated_visual)
+
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + str(keyframe.camera.id) + "_" + keyframe.filename + "_annotated.jpg", annotated_visual)
+
+    reprojected_visual = keyframe.visualise_reprojected_points()
+    reprojected_visual = keyframe.visualise_original_reprojected_points(reprojected_visual)
+    
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + str(keyframe.camera.id) + "_" + keyframe.filename + "_reprojected.jpg", reprojected_visual)
+
+    combined_visual = keyframe.annotations.visualise_splines()
+    combined_visual = keyframe.visualise_reprojected_points(combined_visual)
+
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + str(keyframe.camera.id) + "_" + keyframe.filename + "_combined.jpg", combined_visual)
 
 
 """
@@ -161,41 +255,76 @@ Optimization: iterative closest points
 """
 print("Optimizing camera pose")
 
-for camera in [camera_1]:
+iterations = 60
+
+for camera in cameras:
 
     cpp.optimization.reset_keyframes()
 
     for keyframe in keyframes:
-        assert keyframe.camera == camera, "Keyframe camera does not match camera being optimized"
+        if keyframe.camera == camera:
 
-        cpp.optimization.add_keyframe(
-            keyframe.filename,
-            np.asarray(keyframe.image),
-            keyframe.annotations.array,
-            keyframe.points_gps_array)
+            cpp.optimization.add_keyframe(
+                keyframe.filename,
+                np.asarray(keyframe.image),
+                keyframe.annotations.array,
+                keyframe.points_gps_array)
 
-    new_camera_pose = cpp.optimization.update_camera_pose(camera.pose_vector, camera.intrinsics_vector)
+    new_camera_pose = cpp.optimization.update_camera_pose(camera.pose_vector, camera.intrinsics_vector, iterations)
 
     camera.update_pose(new_camera_pose)
 
+
+
+for camera in cameras:
     print("Final pose of camera", camera.id, ":")
     print("Pose vector [t_cam_gps, quaternion]:\n", camera.pose_vector)
     print("R_gps_cam:\n", camera.H_gps_cam[0:3, 0:3])
     print("t_gps_cam:\n", camera.H_gps_cam[0:3, 3])
 
 
+# TODO: Compute transformation from camera 0 to camera 1
+
 """
-Final reprojection on all keyframes
+Computing error w.r.t. stereo calibration
+"""
+
+H_cam1_cam0 = camera_1.H_cam_gps @ camera_0.H_gps_cam
+
+
+print(H_cam1_cam0)
+
+R_cam1_cam0, t_cam1_cam0 = Transformation.separate_homogeneous_transformation(H_cam1_cam0)
+q_cam1_cam0 = Transformation.convert_rotation_matrix(R_cam1_cam0, to_type='quaternion')
+
+print("t_cam1_cam0:\n", t_cam1_cam0)
+print("q_cam1_cam0:\n", q_cam1_cam0)
+
+t_1_0 = np.array([0.30748946, 0.00190947, 0.00966052])
+q_1_0 = np.array([0.00666986, 0.02121604, -0.00106887, 0.99975209])
+
+# Calculate percentage error in translation and rotation
+
+t_error = (t_cam1_cam0 - t_1_0) / t_1_0
+q_error = (q_cam1_cam0 - q_1_0) / q_1_0
+
+print("t_error:\n", t_error*100, "%")
+print("q_error:\n", q_error*100, "%")
+
+
+"""
+Final reprojection of keyframes
 """
 print("Reprojecting points using final camera pose")
 
 for i, keyframe in enumerate(keyframes):
 
-    annotated_visual = keyframe.annotations.visualise()
-    original_visual = keyframe.visualise_original_reprojected_points(annotated_visual)
-    reprojected_visual = keyframe.visualise_reprojected_points(original_visual)
+    # annotated_visual = keyframe.annotations.visualise_points()
+    annotated_visual = keyframe.annotations.visualise_splines()
+    reprojected_visual = keyframe.visualise_reprojected_points(annotated_visual)
+    # reprojected_visual = keyframe.visualise_original_reprojected_points(reprojected_visual)
     
-    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/" + keyframe.filename + "_final.jpg", reprojected_visual)
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + str(keyframe.camera.id) + "_" + keyframe.filename + "_final.jpg", reprojected_visual)
 
 
 """
