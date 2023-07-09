@@ -88,6 +88,15 @@ class Annotations():
 
     # Public methods
 
+    def visualise_splines(self, visual=None, color: tuple=(255,0,0)):
+        if visual is None:
+            visual = self.image.copy()
+
+        for spline in self.splines:
+            Visualisation.draw_on_image(visual, spline, False, color)
+        return visual
+
+
     def visualise_points(self, visual=None, color: tuple=(255,255,0)):
 
         if visual is None:
@@ -97,11 +106,8 @@ class Annotations():
             Visualisation.draw_on_image(visual, pixel_sequence, False, color)
         return visual
     
-    def visualise_splines(self, visual=None, color: tuple=(255,0,0)):
-        if visual is None:
-            visual = self.image.copy()
-
-        for spline in self.splines:
-            Visualisation.draw_on_image(visual, spline, False, color)
+    
+    def visualise_splines_and_points(self, visual = None, colors: list[tuple]=[(255,0,0), (255,255,0)]):
+        visual = self.visualise_splines(visual, colors[0])
+        visual = self.visualise_points(visual, colors[1])
         return visual
-                        
