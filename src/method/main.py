@@ -74,17 +74,14 @@ camera_1 = Camera(1, image_size = (1920, 1200),
                   initial_H_gps_cam=initial_H_gps_cam)
 
 
-cameras = [camera_0, camera_1]
-
-
-def create_frames(ids: list[int], camera: Camera, include_elevation=True) -> list[Frame]:
+def create_frames(ids: list[int], include_elevation=True) -> list[Frame]:
     """
     Create a list of basic frames for processing of the Railway object.
     """
     frames: list[Frame] = []
     for id in ids:
         id = int(id)
-        frame = Frame(id, camera, include_elevation)
+        frame = Frame(id, include_elevation)
         if frame.gps.is_missing_data:
             print("Frame #", id, "missing data >> skipped")
             np.delete(ids, np.where(ids == id))
@@ -94,7 +91,7 @@ def create_frames(ids: list[int], camera: Camera, include_elevation=True) -> lis
     return frames
 
 
-def create_keyframes(ids: list[int], camera: Camera, railway: Railway) -> list[Keyframe]:
+def create_keyframes(ids: list[int], camera_0: Camera, camera_1: Camera, railway: Railway) -> list[Keyframe]:
     """
     Create a list of sophisticated keyframes from the same camera for optimisation.
     Requires an existing Railway object (to create an attribute of local points).
@@ -102,7 +99,7 @@ def create_keyframes(ids: list[int], camera: Camera, railway: Railway) -> list[K
     keyframes: list[Keyframe] = []
     for id in ids:
         id = int(id)
-        keyframe = Keyframe(id, camera, railway)
+        keyframe = Keyframe(id, camera_0, camera_1, railway)
         if keyframe.gps.is_missing_data:
             print("Keyframe #", id, "missing data >> skipped")
             np.delete(ids, np.where(ids == id))
@@ -143,12 +140,12 @@ Visualization of pre-processed railway in 2D and 3D
 """
 if input("Visualize railway / frames? [y/n]: ") == 'y':
     if input("2D? [y/n] ") == 'y':
-        frames = create_frames(frame_ids, camera_0, include_elevation=False)
+        frames = create_frames(frame_ids, include_elevation=False)
         railway.visualise_2D(show_tracks=False, frames=[])
         railway.visualise_2D(show_tracks=True, frames=[])
 
     if input("GPS Height vs. Elevation? [y/n] ") == 'y':
-        frames = create_frames(frame_ids, camera_0, include_elevation=True)
+        frames = create_frames(frame_ids, include_elevation=True)
         # for frame in frames:
         #     point = frame.gps.t_w_gps
         #     plt.scatter(frame.id, point[2], s=3, c='black')
@@ -173,7 +170,7 @@ if input("Visualize railway / frames? [y/n]: ") == 'y':
         plt.show()
     
     if input("GPS Rotation? [y/n] ") == 'y':
-        frames = create_frames(frame_ids, camera_0, include_elevation=False)
+        frames = create_frames(frame_ids, include_elevation=False)
 
         yaw_0 = frames[0].gps.angles_deg[0]
         pitch_0 = frames[0].gps.angles_deg[1]
@@ -221,11 +218,7 @@ keyframe_ids = [570, 950]
 # for keyframe_id in keyframe_ids:
 #     assert keyframe_id in frame_ids, "Keyframe ID not in frame IDs"
 
-keyframes_0 = create_keyframes(keyframe_ids, camera_0, railway)
-keyframes_1 = create_keyframes(keyframe_ids, camera_1, railway)
-
-keyframes = keyframes_0 + keyframes_1
-
+keyframes = create_keyframes(keyframe_ids, camera_0, camera_1, railway)
 
 """
 Initial reprojection of keyframes
@@ -234,20 +227,23 @@ print("Reprojecting points using initial camera pose")
 
 for i, keyframe in enumerate(keyframes):
 
-    annotated_visual = keyframe.annotations.visualise_points()
-    annotated_visual = keyframe.annotations.visualise_splines(annotated_visual)
+    annotated_visual_0 = keyframe.annotations_0.visualise_splines_and_points()
+    annotated_visual_1 = keyframe.annotations_1.visualise_splines_and_points()
 
-    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + str(keyframe.camera.id) + "_" + keyframe.filename + "_annotated.jpg", annotated_visual)
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + keyframe.filename + "_annotated_0.jpg", annotated_visual_0)
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + keyframe.filename + "_annotated_1.jpg", annotated_visual_1)
 
-    reprojected_visual = keyframe.visualise_reprojected_points()
-    reprojected_visual = keyframe.visualise_original_reprojected_points(reprojected_visual)
+    reprojected_visual_0 = keyframe.visualise_reprojected_and_original_points(camera_0)
+    reprojected_visual_1 = keyframe.visualise_reprojected_and_original_points(camera_1)
     
-    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + str(keyframe.camera.id) + "_" + keyframe.filename + "_reprojected.jpg", reprojected_visual)
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + keyframe.filename + "_reprojected_0.jpg", reprojected_visual_0)
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + keyframe.filename + "_reprojected_1.jpg", reprojected_visual_1)
 
-    combined_visual = keyframe.annotations.visualise_splines()
-    combined_visual = keyframe.visualise_reprojected_points(combined_visual)
+    combined_visual_0 = keyframe.visualise_reprojected_points(camera_0, keyframe.annotations_0.visualise_splines())
+    combined_visual_1 = keyframe.visualise_reprojected_points(camera_1, keyframe.annotations_1.visualise_splines())
 
-    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + str(keyframe.camera.id) + "_" + keyframe.filename + "_combined.jpg", combined_visual)
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + keyframe.filename + "_combined_0.jpg", combined_visual_0)
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + keyframe.filename + "_combined_1.jpg", combined_visual_1)
 
 
 """
@@ -257,59 +253,79 @@ print("Optimizing camera pose")
 
 iterations = 60
 
-for camera in cameras:
+"""
+Camera 0
+"""
 
-    cpp.optimization.reset_keyframes()
+cpp.optimization.reset_keyframes()
 
-    for keyframe in keyframes:
-        if keyframe.camera == camera:
+for keyframe in keyframes:
+    assert keyframe.camera_0 == camera_0
+    cpp.optimization.add_keyframe(
+        keyframe.filename,
+        np.asarray(keyframe.image_0),
+        keyframe.annotations_0.array,
+        keyframe.points_gps_array_0)
 
-            cpp.optimization.add_keyframe(
-                keyframe.filename,
-                np.asarray(keyframe.image),
-                keyframe.annotations.array,
-                keyframe.points_gps_array)
-
-    new_camera_pose = cpp.optimization.update_camera_pose(camera.pose_vector, camera.intrinsics_vector, iterations)
-
-    camera.update_pose(new_camera_pose)
+new_camera_pose = cpp.optimization.update_camera_pose(camera_0.pose_vector, camera_0.intrinsics_vector, iterations)
+camera_0.update_pose(new_camera_pose)
 
 
+"""
+Camera 1
+"""
 
-for camera in cameras:
-    print("Final pose of camera", camera.id, ":")
-    print("Pose vector [t_cam_gps, quaternion]:\n", camera.pose_vector)
+cpp.optimization.reset_keyframes()
+
+for keyframe in keyframes:
+    assert keyframe.camera_1 == camera_1
+    cpp.optimization.add_keyframe(
+        keyframe.filename,
+        np.asarray(keyframe.image_1),
+        keyframe.annotations_1.array,
+        keyframe.points_gps_array_1)
+    
+new_camera_pose = cpp.optimization.update_camera_pose(camera_1.pose_vector, camera_1.intrinsics_vector, iterations)
+camera_1.update_pose(new_camera_pose)
+
+
+for camera in [camera_0, camera_1]:
+    print("Final pose of camera #", camera.id, ":\n")
     print("R_gps_cam:\n", camera.H_gps_cam[0:3, 0:3])
     print("t_gps_cam:\n", camera.H_gps_cam[0:3, 3])
+    print("q_gps_cam:\n", Transformation.convert_rotation_matrix(camera.H_gps_cam[0:3, 0:3], to_type='quaternion'))
 
-
-# TODO: Compute transformation from camera 0 to camera 1
 
 """
-Computing error w.r.t. stereo calibration
+Transformation between cameras
 """
 
+print("Transformation between stereo cameras:\n")
 H_cam1_cam0 = camera_1.H_cam_gps @ camera_0.H_gps_cam
-
-
-print(H_cam1_cam0)
-
 R_cam1_cam0, t_cam1_cam0 = Transformation.separate_homogeneous_transformation(H_cam1_cam0)
 q_cam1_cam0 = Transformation.convert_rotation_matrix(R_cam1_cam0, to_type='quaternion')
-
+print("R_cam1_cam0:\n", R_cam1_cam0)
 print("t_cam1_cam0:\n", t_cam1_cam0)
 print("q_cam1_cam0:\n", q_cam1_cam0)
 
+
+"""
+Given calibration between cameras
+"""
+
+print("Given calibration between stereo cameras")
 t_1_0 = np.array([0.30748946, 0.00190947, 0.00966052])
 q_1_0 = np.array([0.00666986, 0.02121604, -0.00106887, 0.99975209])
+R_1_0 = Transformation.convert_quaternions(q_1_0, to_type='rotation_matrix')
+print("R_cam1_cam0:\n", R_1_0)
+print("t_cam1_cam0:\n", t_1_0)
+print("q_cam1_cam0:\n", q_1_0)
 
-# Calculate percentage error in translation and rotation
+# Absolute position error
 
-t_error = (t_cam1_cam0 - t_1_0) / t_1_0
-q_error = (q_cam1_cam0 - q_1_0) / q_1_0
-
-print("t_error:\n", t_error*100, "%")
-print("q_error:\n", q_error*100, "%")
+print("Absolute position error:\n")
+t_error = t_cam1_cam0 - t_1_0
+print("t_error:\n", t_error)
 
 
 """
@@ -319,18 +335,20 @@ print("Reprojecting points using final camera pose")
 
 for i, keyframe in enumerate(keyframes):
 
-    # annotated_visual = keyframe.annotations.visualise_points()
-    annotated_visual = keyframe.annotations.visualise_splines()
-    reprojected_visual = keyframe.visualise_reprojected_points(annotated_visual)
-    # reprojected_visual = keyframe.visualise_original_reprojected_points(reprojected_visual)
+    # annotated_visual_0 = keyframe.annotations_0.visualise_splines_and_points()
+    # annotated_visual_1 = keyframe.annotations_1.visualise_splines_and_points()
+
+    # cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + keyframe.filename + "_annotated_0.jpg", annotated_visual_0)
+    # cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + keyframe.filename + "_annotated_1.jpg", annotated_visual_1)
+
+    # reprojected_visual_0 = keyframe.visualise_reprojected_and_original_points(camera_0)
+    # reprojected_visual_1 = keyframe.visualise_reprojected_and_original_points(camera_1)
     
-    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + str(keyframe.camera.id) + "_" + keyframe.filename + "_final.jpg", reprojected_visual)
+    # cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + keyframe.filename + "_reprojected_0.jpg", reprojected_visual_0)
+    # cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + keyframe.filename + "_reprojected_1.jpg", reprojected_visual_1)
 
+    combined_visual_0 = keyframe.visualise_reprojected_points(camera_0, keyframe.annotations_0.visualise_splines())
+    combined_visual_1 = keyframe.visualise_reprojected_points(camera_1, keyframe.annotations_1.visualise_splines())
 
-"""
-Evaluation metrics
-"""
-print("Evaluating performance metrics")
-
-# TODO: evaluate performance metrics (reprojection error, etc.) per camera
-# TODO: compare to known transformation between stereo camera setup
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + keyframe.filename + "_combined_0.jpg", combined_visual_0)
+    cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + keyframe.filename + "_combined_1.jpg", combined_visual_1)
