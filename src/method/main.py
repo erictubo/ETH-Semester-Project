@@ -112,7 +112,7 @@ def create_keyframes(ids: list[int], camera_0: Camera, camera_1: Camera, railway
 Dense frames for Railway processing
 """
 frame_ids = np.arange(0, 5495, 10)
-# frame_ids = np.arange(4000, 4300, 1)
+frame_ids = np.arange(4000, 4500, 1)
 
 """
 Railway object: process new (and save to file) or load existing
@@ -141,8 +141,9 @@ Visualization of pre-processed railway in 2D and 3D
 if input("Visualize railway / frames? [y/n]: ") == 'y':
     if input("2D? [y/n] ") == 'y':
         frames = create_frames(frame_ids, include_elevation=False)
-        railway.visualise_2D(show_tracks=False, frames=[])
-        railway.visualise_2D(show_tracks=True, frames=[])
+        # railway.visualise_2D(show_tracks=False, frames=[])
+        # railway.visualise_2D(show_tracks=True, frames=[])
+        railway.visualise_2D(show_tracks=True, frames=frames)
 
     if input("GPS Height vs. Elevation? [y/n] ") == 'y':
         frames = create_frames(frame_ids, include_elevation=True)
@@ -211,9 +212,10 @@ Sparse keyframes for optimization -- subset of prior frames
 # keyframe_ids = [5410, 5420, 5430]
 # keyframe_ids = [5410, 5420, 5430]
 # keyframe_ids = [780, 1090, 1430]
-keyframe_ids = [490, 570, 950]
-keyframe_ids = [570, 950]
+# keyframe_ids = [490, 570, 950]
+# keyframe_ids = [570, 950]
 # keyframe_ids = [5410]
+keyframe_ids: list[int] = [950]
 
 # for keyframe_id in keyframe_ids:
 #     assert keyframe_id in frame_ids, "Keyframe ID not in frame IDs"
@@ -251,7 +253,7 @@ Optimization: iterative closest points
 """
 print("Optimizing camera pose")
 
-iterations = 60
+iterations = 10
 
 """
 Camera 0
@@ -263,6 +265,7 @@ for keyframe in keyframes:
     assert keyframe.camera_0 == camera_0
     cpp.optimization.add_keyframe(
         keyframe.filename,
+        str(keyframe.camera_0.id),
         np.asarray(keyframe.image_0),
         keyframe.annotations_0.array,
         keyframe.points_gps_array_0)
@@ -281,6 +284,7 @@ for keyframe in keyframes:
     assert keyframe.camera_1 == camera_1
     cpp.optimization.add_keyframe(
         keyframe.filename,
+        str(keyframe.camera_1.id),
         np.asarray(keyframe.image_1),
         keyframe.annotations_1.array,
         keyframe.points_gps_array_1)
@@ -316,7 +320,7 @@ Given calibration between cameras
 print("Given calibration between stereo cameras")
 t_1_0 = np.array([0.30748946, 0.00190947, 0.00966052])
 q_1_0 = np.array([0.00666986, 0.02121604, -0.00106887, 0.99975209])
-R_1_0 = Transformation.convert_quaternions(q_1_0, to_type='rotation_matrix')
+R_1_0 = Transformation.convert_quaternions(q_1_0, to_type='rotation matrix')
 print("R_cam1_cam0:\n", R_1_0)
 print("t_cam1_cam0:\n", t_1_0)
 print("q_cam1_cam0:\n", q_1_0)

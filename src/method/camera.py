@@ -7,8 +7,8 @@ import cv2
 
 class Camera:
 
-    def __init__(self, id, focal_length, principal_point, image_size,
-                 distortion_coefficients, distortion_model='equidistant', camera_model='pinhole',
+    def __init__(self, id: int, focal_length: tuple[int], principal_point: list[float], image_size: list[float],
+                 distortion_coefficients: list[float], distortion_model='equidistant', camera_model='pinhole',
                  initial_H_gps_cam=np.array([[0,0,1,0], [-1,0,0,0], [0,-1,0,0], [0,0,0,1]])):
 
         self.id = id

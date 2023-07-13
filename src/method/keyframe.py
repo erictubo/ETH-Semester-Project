@@ -66,6 +66,7 @@ class Keyframe(Frame):
     def __init__(self, id: int, camera_0: 'Camera', camera_1: 'Camera', railway: 'Railway', distorted_annotations: bool = True):
 
         super().__init__(id=id, include_elevation=True)
+
         self.camera_0 = camera_0
         self.camera_1 = camera_1
     

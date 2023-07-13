@@ -5,6 +5,7 @@
 import plotly
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 # Data & methods
 from data import path_to_osm_file
@@ -80,10 +81,13 @@ class Railway:
         if show_nodes:
             for node in self.nodes:
                 Visualisation.plot_XY(node.x, node.y, color='red')
-        for frame in frames:
-            point = frame.gps.t_w_gps
-            Visualisation.plot_XY(point[0], point[1], 'black')
-            #plt.Circle((point[0], point[1]), r_ahead, 'red')
+        if len(frames) > 0:
+            for frame in frames:
+                point = frame.gps.t_w_gps
+                Visualisation.plot_XY(point[0], point[1], 'black')
+                #plt.Circle((point[0], point[1]), r_ahead, 'red')
+        plt.xlabel("Position X [m]")
+        plt.ylabel("Position Y [m]")
         Visualisation.show_plot()
 
     def visualise_3D(self, frames: list['Frame'] = []):
