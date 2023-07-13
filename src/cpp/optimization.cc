@@ -249,9 +249,10 @@ void DrawCorrespondences(
 void SaveVisualisation(
     const cv::Mat& visualisation,
     const std::string& filename,
+    const std::string& camera_id,
     const int& iteration) {
     
-    std::string path = "/Users/eric/Developer/Cam2GPS/visualisation/optimization/" + filename + "_it_" + std::to_string(iteration) + ".png";
+    std::string path = "/Users/eric/Developer/Cam2GPS/visualisation/optimization/" + filename + "_cam_" + camera_id + "_it_" + std::to_string(iteration) + ".png";
     cv::imwrite(path, visualisation);
 }
 
@@ -259,6 +260,7 @@ void SaveVisualisation(
 struct Keyframe {
     Keyframe(
         const std::string filename,
+        const std::string camera_id,
         const cv::Mat& image,
         const std::vector<Eigen::Vector2d>& observed_2D_points,
         const std::vector<Eigen::Vector3d>& gps_3D_points)
@@ -269,6 +271,7 @@ struct Keyframe {
         gps_3D_points(gps_3D_points) {}
 
     std::string filename;
+    std::string camera_id;
     cv::Mat image;
     std::vector<Eigen::Vector2d> observed_2D_points;
     std::vector<Eigen::Vector3d> gps_3D_points;
@@ -278,11 +281,12 @@ std::vector<Keyframe> keyframes;
 
 void cpp_add_keyframe(
     const std::string filename,
+    const std::string camera_id,
     const cv::Mat& image,
     const std::vector<Eigen::Vector2d>& observed_2D_points,
     const std::vector<Eigen::Vector3d>& gps_3D_points) {
 
-    struct Keyframe keyframe(filename, image, observed_2D_points, gps_3D_points);
+    struct Keyframe keyframe(filename, camera_id, image, observed_2D_points, gps_3D_points);
     keyframes.push_back(keyframe);
 }
 
@@ -306,6 +310,7 @@ void cpp_update_camera_pose(
         for (const auto& keyframe : keyframes) {
 
             const std::string& filename = keyframe.filename;
+            const std::string& camera_id = keyframe.camera_id;
             const cv::Mat& image = keyframe.image;
             const std::vector<Eigen::Vector2d>& observed_2D_points = keyframe.observed_2D_points;
             const std::vector<Eigen::Vector3d>& gps_3D_points = keyframe.gps_3D_points;
@@ -324,7 +329,7 @@ void cpp_update_camera_pose(
             // Visualise and save
             cv::Mat visualisation = image.clone();
             DrawCorrespondences(correspondence_indices, observed_2D_points, reprojected_2D_points, visualisation);
-            SaveVisualisation(visualisation, filename, iteration);
+            SaveVisualisation(visualisation, filename, camera_id, iteration);
 
             // Add residuals to problem
             for (size_t i = 0; i < num_observed_points; ++i) {
@@ -366,12 +371,15 @@ void cpp_update_camera_pose(
 
 void py_add_keyframe(
     py::str filename,
+    py::str camera_id,
     py::array_t<uint8_t, py::array::c_style | py::array::forcecast> image,
     py::array_t<double, py::array::c_style | py::array::forcecast> observed_2D_points,
     py::array_t<double, py::array::c_style | py::array::forcecast> gps_3D_points) {
 
     // Convert Python input types to C++ types
     std::string filename_cpp = filename;
+
+    std::string camera_id_cpp = camera_id;
 
     cv::Mat image_cpp(image.shape(0), image.shape(1), CV_MAKETYPE(CV_8U, image.shape(2)),
                       const_cast<uint8_t*>(image.data()), image.strides(0));
@@ -391,7 +399,7 @@ void py_add_keyframe(
     }
 
     // Call the C++ function
-    cpp_add_keyframe(filename_cpp, image_cpp, observed_2D_points_cpp, gps_3D_points_cpp);
+    cpp_add_keyframe(filename_cpp, camera_id_cpp, image_cpp, observed_2D_points_cpp, gps_3D_points_cpp);
 }
 
 
