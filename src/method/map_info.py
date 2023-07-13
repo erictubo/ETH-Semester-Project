@@ -9,7 +9,7 @@ import zipfile
 import urllib.request
 
 # Data & methods
-from data import path_to_elevation_data, pole_location_dataframe
+from data import path_to_elevation_data
 
 
 class MapInfo:
@@ -89,6 +89,8 @@ class MapInfo:
         Determines closest pole to the specified GPS position.
         Output: pole_worldview_gps
         """
+
+        from data import pole_location_dataframe
 
         df = pole_location_dataframe
         for index, pole in df.iterrows():

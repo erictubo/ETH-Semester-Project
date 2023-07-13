@@ -48,7 +48,7 @@ class Railway:
         self.r_behind = r_behind
 
         self.railway_map = RailwayMap("Potsdam2")
-        self.railway_map.import_from_osm_file(path_to_osm_file + "potsdam2.osm")
+        self.railway_map.import_from_osm_file(path_to_osm_file)
 
         print("Extracting relevant nodes and tracks")
         self.nodes = self.__get_relevant_nodes__(frames, r_ahead, r_behind)
