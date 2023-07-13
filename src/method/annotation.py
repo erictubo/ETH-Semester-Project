@@ -12,7 +12,7 @@ from camera import Camera
 from visualisation import Visualisation
 
 
-class Annotations():
+class Annotation():
 
     def __init__(self, image, camera: Camera, filename: str, distorted: bool, int_spacing=8, int_smoothing=0.5):
 
@@ -40,7 +40,7 @@ class Annotations():
             path_to_annotations = path_to_annotations_0
         elif self.camera.id == 1:
             path_to_annotations = path_to_annotations_1
-        annotations_file = path_to_annotations + 'annotations.csv'
+        annotations_file = path_to_annotations
 
         with open(annotations_file) as csv_file:
             for row in csv.reader(csv_file):

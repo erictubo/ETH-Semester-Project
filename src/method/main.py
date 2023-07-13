@@ -73,6 +73,8 @@ camera_1 = Camera(1, image_size = (1920, 1200),
                   distortion_coefficients = [0.16213733886648546, 0.11615082942281711, -0.05779296718987261, 0.324051803251489],
                   initial_H_gps_cam=initial_H_gps_cam)
 
+cameras = [camera_0, camera_1]
+
 
 def create_frames(ids: list[int], include_elevation=True) -> list[Frame]:
     """
@@ -229,8 +231,8 @@ print("Reprojecting points using initial camera pose")
 
 for i, keyframe in enumerate(keyframes):
 
-    annotated_visual_0 = keyframe.annotations_0.visualise_splines_and_points()
-    annotated_visual_1 = keyframe.annotations_1.visualise_splines_and_points()
+    annotated_visual_0 = keyframe.annotation_0.visualise_splines_and_points()
+    annotated_visual_1 = keyframe.annotation_1.visualise_splines_and_points()
 
     cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + keyframe.filename + "_annotated_0.jpg", annotated_visual_0)
     cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + keyframe.filename + "_annotated_1.jpg", annotated_visual_1)
@@ -241,8 +243,8 @@ for i, keyframe in enumerate(keyframes):
     cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + keyframe.filename + "_reprojected_0.jpg", reprojected_visual_0)
     cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + keyframe.filename + "_reprojected_1.jpg", reprojected_visual_1)
 
-    combined_visual_0 = keyframe.visualise_reprojected_points(camera_0, keyframe.annotations_0.visualise_splines())
-    combined_visual_1 = keyframe.visualise_reprojected_points(camera_1, keyframe.annotations_1.visualise_splines())
+    combined_visual_0 = keyframe.visualise_reprojected_points(camera_0, keyframe.annotation_0.visualise_splines())
+    combined_visual_1 = keyframe.visualise_reprojected_points(camera_1, keyframe.annotation_1.visualise_splines())
 
     cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + keyframe.filename + "_combined_0.jpg", combined_visual_0)
     cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/initial/" + keyframe.filename + "_combined_1.jpg", combined_visual_1)
@@ -267,7 +269,7 @@ for keyframe in keyframes:
         keyframe.filename,
         str(keyframe.camera_0.id),
         np.asarray(keyframe.image_0),
-        keyframe.annotations_0.array,
+        keyframe.annotation_0.array,
         keyframe.points_gps_array_0)
 
 new_camera_pose = cpp.optimization.update_camera_pose(camera_0.pose_vector, camera_0.intrinsics_vector, iterations)
@@ -286,7 +288,7 @@ for keyframe in keyframes:
         keyframe.filename,
         str(keyframe.camera_1.id),
         np.asarray(keyframe.image_1),
-        keyframe.annotations_1.array,
+        keyframe.annotation_1.array,
         keyframe.points_gps_array_1)
     
 new_camera_pose = cpp.optimization.update_camera_pose(camera_1.pose_vector, camera_1.intrinsics_vector, iterations)
@@ -339,8 +341,8 @@ print("Reprojecting points using final camera pose")
 
 for i, keyframe in enumerate(keyframes):
 
-    # annotated_visual_0 = keyframe.annotations_0.visualise_splines_and_points()
-    # annotated_visual_1 = keyframe.annotations_1.visualise_splines_and_points()
+    # annotated_visual_0 = keyframe.annotation_0.visualise_splines_and_points()
+    # annotated_visual_1 = keyframe.annotation_1.visualise_splines_and_points()
 
     # cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + keyframe.filename + "_annotated_0.jpg", annotated_visual_0)
     # cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + keyframe.filename + "_annotated_1.jpg", annotated_visual_1)
@@ -351,8 +353,8 @@ for i, keyframe in enumerate(keyframes):
     # cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + keyframe.filename + "_reprojected_0.jpg", reprojected_visual_0)
     # cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + keyframe.filename + "_reprojected_1.jpg", reprojected_visual_1)
 
-    combined_visual_0 = keyframe.visualise_reprojected_points(camera_0, keyframe.annotations_0.visualise_splines())
-    combined_visual_1 = keyframe.visualise_reprojected_points(camera_1, keyframe.annotations_1.visualise_splines())
+    combined_visual_0 = keyframe.visualise_reprojected_points(camera_0, keyframe.annotation_0.visualise_splines())
+    combined_visual_1 = keyframe.visualise_reprojected_points(camera_1, keyframe.annotation_1.visualise_splines())
 
     cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + keyframe.filename + "_combined_0.jpg", combined_visual_0)
     cv2.imwrite("/Users/eric/Developer/Cam2GPS/visualisation/final/" + keyframe.filename + "_combined_1.jpg", combined_visual_1)

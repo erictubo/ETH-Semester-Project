@@ -9,7 +9,7 @@ import random
 from data import path_to_images_0, path_to_images_1, path_to_poses
 
 from gps import GPS
-from annotations import Annotations
+from annotation import Annotation
 from transformation import Transformation
 from visualisation import Visualisation
 
@@ -63,25 +63,35 @@ class Keyframe(Frame):
     - Annotations
     """
 
-    def __init__(self, id: int, camera_0: 'Camera', camera_1: 'Camera', railway: 'Railway', distorted_annotations: bool = True):
+    def __init__(self, id: int, camera_0: 'Camera', camera_1: 'Camera', railway: 'Railway', distorted_annotation: bool = True):
 
         super().__init__(id=id, include_elevation=True)
 
         self.camera_0 = camera_0
         self.camera_1 = camera_1
+
+        # self.cameras = [self.camera_0, self.camera_1]
     
         self.distorted_image_0 = self.__get_image__(self.camera_0)
         self.distorted_image_1 = self.__get_image__(self.camera_1)
+
+        # self.distorted_images = [self.distorted_image_0, self.distorted_image_1]
     
         self.image_0 = camera_0.undistort_image(self.distorted_image_0)
         self.image_1 = camera_1.undistort_image(self.distorted_image_1)
 
-        self.annotations_0 = Annotations(self.image_0, self.camera_0, self.filename, distorted_annotations)
-        self.annotations_1 = Annotations(self.image_1, self.camera_1, self.filename, distorted_annotations)
+        # self.images = [self.image_0, self.image_1]
+
+        self.annotation_0 = Annotation(self.image_0, self.camera_0, self.filename, distorted_annotation)
+        self.annotation_1 = Annotation(self.image_1, self.camera_1, self.filename, distorted_annotation)
+
+        # self.annotations = [self.annotation_0, self.annotation_1]
         
         self.gps.__get_local_points_in_tracks__(railway)
         self.points_gps_array_0, self.points_gps_list_0 = self.__process_local_gps_points__(self.camera_0)
         self.points_gps_array_1, self.points_gps_list_1 = self.__process_local_gps_points__(self.camera_1)
+
+        # self.points_gps_arrays = [self.points_gps_array_0, self.points_gps_array_1]
     
     def __get_image__(self, camera: 'Camera'):
         if camera.id == 0:
