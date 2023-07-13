@@ -1,18 +1,14 @@
 \chapter{Conclusion}
 \label{chapter:conclusion}
 
-% Quality of results, accuracy, ...
+% Summary: method
+This report has presented a complete extrinsic camera calibration and reprojection pipeline for a camera attached to a railway vehicle, given a set of images with associated GPS measurements as well as global map information. The 6 degree-of-freedom camera pose is estimated using an optimization formulation, where the railway map and elevation data is processed in order to reproject local railway tracks into the camera view of each frame, upon which the reprojection error between reprojected and detected tracks in the image is minimized, utilizing an iterative closest points (ICP) algorithm.
 
-...
+% Summary: implementation
+\textcolor{red}{TODO: summarize implementation chapter}
 
-Algorithm requires a variety of track shapes to yield accurate results. ...
-Obvious since the residual is in 2D but the pose estimate is 3D 6DoF
+% Evaluation: single frame convergence, robustness, stereo accuracy & precision, multi-frame accuracy, causes of error
+Evaluation of single-frame optimization on a variety of scenes has shown that the method predictably converges within 10-50 ICP iterations, depending on the scene complexity and initial pose estimate. Given a decent initial height and depth estimate, the method is robust to different track shapes and still manages to converge if the initial ICP correspondences are incorrect. On the contrary, keyframes with depth-variability of the track actually improve the result and should be given preference as input for the optimization. It has been demonstrated that the proposed method is able to both accurately and precisely estimate the camera pose, as compared to stereo camera calibration ground truth. Especially the horizontal and vertical positions are very accurate, while the depth error is slightly larger yet without noticeable effects. When it comes to multi-frame optimization, while it does converge, reprojections are inconsistent across frames. This can only be due to sensor noise, in particular the RTK-GPS rotation measurements, where small angular errors lead to large reprojection errors. If it were not for this limitation, the method should be able to consistently and accurately estimate the camera pose across multiple frames, since this is simply an adaptation of the single-frame optimization that averages out the noise.
 
-
-% Robustness, ...
-When it comes to robustness (to different track shapes) ...
-
-
-% Extensions, future work, ...
-% implement track detection
-Possible extensions to this project include the implementation of a track detection algorithm, which would allow the pipeline to be used on any railway ...
+% Extensions: track detection, sensor fusion
+Possible extensions to this project include track detection using machine learning as well as sensor fusion of the GPS measurements with IMU and odometry data. Automated track detection would allow the method to be applied to arbitrary scenes without manual annotation, while sensor fusion would improve the accuracy of the state estimate and thus the reprojection error and multi-frame optimization results.

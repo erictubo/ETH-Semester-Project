@@ -7,6 +7,11 @@
 \documentclass[10pt,twoside,a4paper]{report}
 
 \usepackage{pdfpages}
+\usepackage{tabularx}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage{array}
+\setlist{nolistsep}
 
 % ETHASL package
 % TODO Choose options according to your project
@@ -66,17 +71,17 @@
 \setcounter{tocdepth}{2}
 
 \tableofcontents
-\cleardoublepage
+% \cleardoublepage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Chapters standard
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\input{chapters/preface}
-\cleardoublepage
-\input{chapters/abstract}
-\cleardoublepage
-\input{chapters/symbols}
-\cleardoublepage
+% \input{chapters/0_preface}
+% \cleardoublepage
+\input{chapters/0_abstract}
+% \cleardoublepage
+\input{chapters/0_symbols}
+% \cleardoublepage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Chapters custom
@@ -84,9 +89,8 @@
 \pagestyle{fancy}
 \pagenumbering{arabic}
 
-% TODO Add your own chapters here
 \input{chapters/1_introduction}
-\cleardoublepage
+% \cleardoublepage
 \input{chapters/2_background}
 \input{chapters/3_method}
 \input{chapters/4_implementation}

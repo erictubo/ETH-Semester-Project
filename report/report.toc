@@ -1,36 +1,35 @@
-\contentsline {chapter}{Preface}{v}{chapter*.2}%
-\contentsline {chapter}{Abstract}{vii}{chapter*.3}%
-\contentsline {chapter}{Symbols}{ix}{chapter*.4}%
-\contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
+\contentsline {chapter}{Abstract}{iv}{chapter*.2}%
+\contentsline {chapter}{Symbols}{1}{chapter*.3}%
+\contentsline {chapter}{\numberline {1}Introduction}{2}{chapter.1}%
 \contentsline {chapter}{\numberline {2}Background}{3}{chapter.2}%
 \contentsline {section}{\numberline {2.1}Coordinate Systems}{3}{section.2.1}%
 \contentsline {section}{\numberline {2.2}Coordinate Transformations}{4}{section.2.2}%
 \contentsline {subsection}{\numberline {2.2.1}Homogeneous Transformation Matrix}{4}{subsection.2.2.1}%
-\contentsline {subsection}{\numberline {2.2.2}Quaternion Rotation}{4}{subsection.2.2.2}%
-\contentsline {section}{\numberline {2.3}Camera Reprojection \& Image Undistortion}{5}{section.2.3}%
-\contentsline {subsection}{\numberline {2.3.1}Reprojection via the Pinhole Camera Model}{5}{subsection.2.3.1}%
-\contentsline {subsection}{\numberline {2.3.2}Image Undistortion: Equidistant Model}{5}{subsection.2.3.2}%
+\contentsline {subsection}{\numberline {2.2.2}Quaternion Rotation}{5}{subsection.2.2.2}%
+\contentsline {section}{\numberline {2.3}Camera Model}{5}{section.2.3}%
+\contentsline {subsection}{\numberline {2.3.1}Reprojection}{5}{subsection.2.3.1}%
+\contentsline {subsection}{\numberline {2.3.2}Undistortion}{5}{subsection.2.3.2}%
 \contentsline {section}{\numberline {2.4}Iterative Closest Points (ICP)}{6}{section.2.4}%
 \contentsline {chapter}{\numberline {3}Method}{7}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Railway Processing}{7}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Track Reprojection}{8}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Track Detection}{9}{section.3.3}%
-\contentsline {subsection}{\numberline {3.3.1}Railway Tracks}{9}{subsection.3.3.1}%
-\contentsline {subsection}{\numberline {3.3.2}Poles}{9}{subsection.3.3.2}%
-\contentsline {section}{\numberline {3.4}Error Minimization}{9}{section.3.4}%
-\contentsline {chapter}{\numberline {4}Implementation}{10}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Python Classes \& Objects (Methods, Data)}{10}{section.4.1}%
-\contentsline {subsection}{\numberline {4.1.1}Railway}{10}{subsection.4.1.1}%
-\contentsline {subsection}{\numberline {4.1.2}Keyframe \& GPS}{10}{subsection.4.1.2}%
-\contentsline {subsection}{\numberline {4.1.3}Camera}{11}{subsection.4.1.3}%
-\contentsline {subsection}{\numberline {4.1.4}Transformation}{11}{subsection.4.1.4}%
-\contentsline {section}{\numberline {4.2}C++ Optimization: Ceres Solver}{11}{section.4.2}%
-\contentsline {subsection}{\numberline {4.2.1}Cost Function}{11}{subsection.4.2.1}%
-\contentsline {subsection}{\numberline {4.2.2}Residuals}{11}{subsection.4.2.2}%
-\contentsline {subsection}{\numberline {4.2.3}Parameters}{11}{subsection.4.2.3}%
-\contentsline {section}{\numberline {4.3}Required Input Data}{11}{section.4.3}%
-\contentsline {section}{\numberline {4.4}Output Data}{11}{section.4.4}%
-\contentsline {chapter}{\numberline {5}Results}{12}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Evaluation}{12}{section.5.1}%
-\contentsline {chapter}{\numberline {6}Conclusion}{13}{chapter.6}%
-\contentsline {chapter}{Bibliography}{14}{chapter*.8}%
+\contentsline {section}{\numberline {3.1}Overview}{7}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Map Processing}{8}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Track Reprojection}{9}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Track Detection}{10}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Pose Optimization}{11}{section.3.5}%
+\contentsline {chapter}{\numberline {4}Implementation}{14}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Python Classes \& Objects (Methods, Data)}{14}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Railway}{14}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Keyframe \& GPS}{15}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}Camera}{15}{subsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.1.4}Transformation}{15}{subsection.4.1.4}%
+\contentsline {section}{\numberline {4.2}C++ Optimization: Ceres Solver}{15}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Cost Function}{15}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Residuals}{15}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Parameters}{15}{subsection.4.2.3}%
+\contentsline {section}{\numberline {4.3}Required Input Data}{15}{section.4.3}%
+\contentsline {section}{\numberline {4.4}Output Data}{15}{section.4.4}%
+\contentsline {chapter}{\numberline {5}Results \& Evaluation}{16}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Single-frame}{16}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Multi-frame}{19}{section.5.2}%
+\contentsline {chapter}{\numberline {6}Conclusion}{24}{chapter.6}%
+\contentsline {chapter}{Bibliography}{25}{chapter*.15}%

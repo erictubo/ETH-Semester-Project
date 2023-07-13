@@ -1,0 +1,14 @@
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+% The primary task of vision-based driver support systems is to assist the driver in operating a vehicle safely, which includes raising an alarm in case of a potential collision. In this work, we present an online method for extrinsically calibrating a monocular camera installed on a track vehicle for named support systems. The method utilizes a preinstalled GPS to self-localize the vehicle and a front-mounted camera to search for anomalies within the area between the railway tracks. In order to determine this area of interest, the railway tracks are projected into the camera frame, which are known from a given map. For a precise projection, we require the relative pose between the GPS and the camera.
+
+
+% Motivation & Problem Description
+Vision-based driver assistance systems play a critical role in improving the safety of railway vehicles, especially in the case of collision detection. In this work, we propose an online method for extric calibration of a camera mounted to a track vehicle across multiple frames. The method makes use of a preinstalled GPS sensor to localize the vehicle with respect to a map and a detail camera to identify obstacles between the railway tracks. In order to determine this region of interest, local railway tracks from the map are reprojected into camera view. For a precise reprojection, the camera pose with respect to the GPS sensor is required.
+
+% Solution: method
+Our proposed method to estimate the 6 degree-of-freedom camera pose is based on an optimization approach. The railway map and elevation data is processed in order to reproject local railway tracks into the camera view of each frame, upon which the reprojection error between reprojected and detected tracks in the image is minimized, utilizing an iterative closest points (ICP) algorithm.
+
+% Conclusion: evaluation
+Evaluation across a variety of scenes shows that the proposed method is able to accurately and precisely estimate the camera pose, as compared to stereo camera calibration ground truth, at least in single-frame optimization. Given a decent initial height and depth estimate, the method is robust to different track shapes -- keyframes with depth-variability of the track actually improve the result. When it comes to multi-frame optimization, the accuracy of the method is limited by sensor noise, in particular the RTK-GPS rotation measurements, since small angular errors lead to large reprojection errors. This limitation can likely be overcome by applying sensor fusion to improve the GPS state estimate with IMU and odometry data.
