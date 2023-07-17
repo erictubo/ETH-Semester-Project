@@ -5,16 +5,20 @@
 Obstacle detection is crucial for safe operation of railway vehicles. A prerequisite for this is identifying a region of interest (ROI), in other words knowing where to look for obstacles, which means that the tracks ahead of the vehicle need to be correctly identified and located. This could be done by projecting a known railway map into camera view. However, this requires precise knowledge of the camera position and rotation -- not typically available in the field or with existing datasets. Given the degree of accuracy required for long-range obstacle detection (LROD), this is a non-trivial task.
 
 % Problem Description
-The aim of this semester project is to develop an extrinsic camera calibration and reprojection pipeline based on visual cues and map information, where the intrinsics of the camera are known. The available data includes a set of images with associated pose readings from a GPS sensor, as well as a global railway map. The images are taken from a camera that is mounted to the front of a vehicle, which is driving along the railway track. The GPS sensor is also attached to the vehicle, but in a different place. Moreover, the map information includes OpenStreetMap (OSM) data with the positions and properties of railway nodes and tracks, as well as elevation data.
+The goal of this semester project is to develop an extrinsic camera calibration and reprojection pipeline based on visual cues and map information. Available data includes a set of images with associated GPS poses, from a camera and GPS sensor both mounted to a vehicle driving along a track. In addition, map information includes OpenStreetMap (OSM) data with the positions and properties of railway nodes and tracks, as well as elevation data.
 
-% TODO: add figure with data types
+% Related Work:
+% 1. Photogrammetry \cite{wang2015inverse}:
+    % \cite{wang2015inverse} requires instruments such as calibration boards or markers placed ahead of of the camera, but does not use "online" visual information collected during the drive.
+% 2. CNN \cite{lin20203d}:
+    % \cite{lin20203d} trains a convolutional neural network to determine the camera extrinsics. Lack of labeled data for track vehicles.
+% 3. Geometric \cite{spiegelhalter2023extrinsics}:
+    % \cite{spiegelhalter2023extrinsics} proposes a geometric approach, applying a line-detection algorithm to extract image features such as vanishing points, railway sleepers, and poles from an image, which are used to compute the camera pose step-by-step. However, this approach is not generalizable as it only works on carefully-selected individual frames with straight tracks.
 
-% TODO: add figure with setup
-
-% Related Work
-A previous solution \cite{spiegelhalter2023extrinsics} proposes a geometric approach, applying a line-detection algorithm to extract image features such as vanishing points, railway sleepers, and poles from an image, which are used to compute the camera pose step-by-step. However, this approach is not generalizable as it only works on carefully-selected individual frames with straight tracks.
+% Paragraph about related work, 1-2 sentences each for 3 papers
+Related work includes approaches based on photogrammetry, convolutional neural networks (CNNs), and image geometry. The first approach \cite{wang2015inverse} requires instruments such as a calibration board placed ahead of the camera, but does not use "online" visual information collected during operation. The second approach \cite{lin20203d} trains a CNN to determine the camera extrinsics, requiring a large amount of labeled data not available in this case. Finally, \cite{spiegelhalter2023extrinsics} extracts geometric image features to compute the camera pose step-by-step. However, this approach is not generalizable as it only works on carefully-selected individual frames with straight tracks.
 
 % My Solution: what makes it different
-The solution presented in this report proposes to directly reproject the 3D map into camera view, and formulate an optimization problem to find the correct camera pose. The aim is to build a robust pipeline that works across multiple frames, thus alleviating the prior shortcomings.
+The solution presented here proposes to directly reproject the 3D map into camera view, and formulate an optimization problem based on iterative closest points (ICP) to determine the correct camera pose. The aim is to build a robust pipeline that works across multiple frames, thus alleviating the prior shortcomings.
 
-This report is structured as follows. \Cref{chapter:background} provides background information in order to introduce relevant technical concepts for an improved understanding. \Cref{chapter:method} outlines the proposed method, describing all main components, processes, as well as inputs and outputs in detail. \Cref{chapter:implementation} discusses the implementation details, which includes the software architecture, methods, and data types so that others are able to operate and extend the pipeline. \Cref{chapter:results} presents and evaluates the results. \Cref{chapter:conclusion} concludes the report and discusses possible future work.
+This report is structured as follows. \Cref{chapter:background} provides background information about relevant technical concepts. \Cref{chapter:method} outlines the proposed method, describing all main components, processes, as well as inputs and outputs in detail, while \Cref{chapter:implementation} discusses the implementation details, including software architecture, objects and data types. Finally, \Cref{chapter:results} presents, analyzes, and evaluates the results, and \Cref{chapter:conclusion} concludes the report.

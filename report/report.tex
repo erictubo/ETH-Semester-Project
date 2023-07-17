@@ -11,6 +11,7 @@
 \usepackage{multicol}
 \usepackage{enumitem}
 \usepackage{array}
+\usepackage{listings}
 \setlist{nolistsep}
 
 % ETHASL package
@@ -51,8 +52,7 @@
 \pagestyle{plain}
 \pagenumbering{roman}
 
-\setlength{\parskip}{\baselineskip}
-\setlength{\parindent}{0pt}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Declaration of originality
@@ -60,7 +60,7 @@
 \pagestyle{empty}
 % TODO Modify placeholders in declaration.tex
 %\input{chapters/declaration}
-\includepdf[pagecommand={}]{chapters/declaration-originality.pdf}
+\includepdf[pagecommand={}]{chapters/declaration-originality-signed.pdf}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -71,17 +71,21 @@
 \setcounter{tocdepth}{2}
 
 \tableofcontents
-% \cleardoublepage
+\cleardoublepage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Chapters standard
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setlength{\parskip}{\baselineskip}
+\setlength{\parindent}{0pt}
+
 % \input{chapters/0_preface}
 % \cleardoublepage
 \input{chapters/0_abstract}
-% \cleardoublepage
+\cleardoublepage
 \input{chapters/0_symbols}
-% \cleardoublepage
+\cleardoublepage
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Chapters custom

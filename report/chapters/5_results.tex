@@ -32,7 +32,7 @@ This section evaluates single-frame optimization with respect to convergence, ro
 
 It can be seen that the final alignment between reprojected and observed tracks is quite good in all cases. Even if the tracks are not perfectly aligned, as is the case with some intersections (e.g. bottom right image) which is likely due to inaccuracies in the railway map, the track directions on all sides of the intersection is still very well aligned.
 
-\subsection*{Convergence \& Initial Estimates}
+\subsection{Convergence \& Initial Estimates}
 
 The method converges predictably and reliably, given a decent initial height and depth estimate. During analysis, the method always converged after 10-50 ICP iterations (i.e. number of correspondence updates), depending on the scene complexity and initial pose estimate. In this context, convergence implies that the alignment does no longer noticeable improve with further iterations.
 
@@ -40,7 +40,7 @@ However, it is important to have a close initial height and depth position estim
 
 When it comes to all other initial guesses, including the lateral position and all rotations, they were simply set to zero in the camera frame -- implying that the camera faces perfectly forward at the same lateral position as the GPS sensor -- without any convergence issues. Overall, the method is resilient to incorrect initial guesses, as long as the height and depth estimates are decent.
 
-\subsection*{Robustness \& Generalization}
+\subsection{Robustness \& Generalization}
 
 The method is also robust to scene changes and can be generalized to new data without problems. Even if the initial ICP correspondences are predominantly incorrect, i.e. the wrong tracks are associated with each other, they still adjust themselves during optimization. An example of this is shown in \Cref{fig:self-adjusting_correspondences}. This self-correcting of correspondences to the correct tracks ocurrs relatively quickly within the first few iterations, after which the pose is only refined.
 
@@ -59,23 +59,23 @@ The method is also robust to scene changes and can be generalized to new data wi
 
 Generalization to different scenes and new datasets is also possible, yet keyframes with higher track complexity should be selected to achieve better results. Higher track complexity means that the scenes should have a depth-variability of the track, as is the case in curves or intersections, as opposed to simple straight tracks. Examples of such scenes are the chosen frames in this chapter. In general, more complex tracks also lead to better results because more information is available to optimize for in different dimensions. With these prerequisites, the method is robust and generalizes well.
 
-\subsection*{Accuracy \& Precision}
+\subsection{Accuracy \& Precision}
 
 The accuracy of the pose estimation can be evaluated using the stereo camera calibration data, which provides a ground truth for the relative pose between the stereo cameras. At first, the stereo cameras are optimized separately, using the same optimization method as for the single-frame optimization, to get their poses relative to the GPS sensor. Then, the relative pose between the stereo cameras is computed and compared to the calibration ground truth.
 
 \begin{table}[h]
-    \caption{Stereo calibration compared to relative camera transformation obtained from different frames.}
+    \caption{Stereo calibration data compared to relative camera transformation obtained from independent optimizations of different keyframes.}
     \centering
-    \begin{tabular}{ | l | c | c | c | }
-        \hline
+    \begin{tabular}{ l c c c }
+        \toprule
             & $\Delta X$ [m]& $\Delta Y$ [m] & $\Delta Z$ [m] \\
-        \hline
+        \midrule
         \textbf{Calibration}    & 0.307 & 0.002  & 0.010 \\
-        \hline
+        \midrule
         \textbf{Frame 1}        & 0.289 & -0.006 & 0.163 \\
         \textbf{Frame 2}        & 0.261 & -0.047 & 0.128 \\
         \textbf{Frame 3}        & 0.300 & 0.010  & 0.133 \\
-        \hline
+        \bottomrule
     \end{tabular}
     \label[table]{tab:stereo_calibration_accuracy}
 \end{table}
@@ -93,7 +93,7 @@ When it comes to rotation, the results are all quite accurate and close to zero,
 
 The multi-frame optimization is evaluated on two sets of 3 frames, one with consecutive frames and another with keyframes of different scenes. All frames use the same initial camera pose estimate, as outlined in single-frame optimization above.
 
-\subsection*{Multiple Keyframes}
+\subsection{Multiple Keyframes}
 
 The first set of frames consists of three keyframes with different scenes that are optimized simultaneously. The initial estimates are shown in \Cref{fig:multi-frame_initial_correspondences}, while the converged outputs are shown in \Cref{fig:multi-frame_final_correspondences}. A comparison to the equivalent single-frame optimization outputs is shown in \Cref{fig:equivalent_single-frame_final_correspondences}.
 
@@ -150,7 +150,7 @@ The first set of frames consists of three keyframes with different scenes that a
 
 When looking at \Cref{fig:multi-frame_final_correspondences}, the multi-frame results don't have a very good alignment. It seems that there are conflicts in the data, since the same camera pose estimate leads to inconsistent reprojections across frames. This becomes especially aparent when comparing to the equivalent single-frame optimization results in \Cref{fig:equivalent_single-frame_final_correspondences}, which are much more consistent.
 
-\subsection*{Consecutive Frames}
+\subsection{Consecutive Frames}
 
 To test if these issues persist with more similar frames, a second set of frames is used that consists of three nearby frames with a similar scene that are optimized simultaneously. The initial estimates are shown in \Cref{fig:nearby_multi-frame_initial_correspondences}, while the converged outputs are shown in \Cref{fig:nearby_multi-frame_final_correspondences}.
 
@@ -190,12 +190,14 @@ To test if these issues persist with more similar frames, a second set of frames
 
 While the alignment in \Cref{fig:nearby_multi-frame_final_correspondences} seems slightly better than in \Cref{fig:multi-frame_final_correspondences}, it is also not very precise. The same issues with inconsistent reprojections across frames are still present. The fact that even nearby frames lead to inconsistent reprojections is a strong indicator of the data being too imprecise.
 
-\newpage
-\subsection*{Analysis}
+
+\subsection{Analysis}
 
 From the results presented in this section, it has become clear that the data is not very precise across frames to be optimized together for consistent reprojections. The measurements tend to be somewhat noisy, which leads to inconsistent reprojections across frames. This is likely due to a combination of different factors, including RTK-GPS sensor noise, elevation data, and the railway nodes.
 
 While the RTK-GPS sensor is very accurate globally, it is not always precise locally. \Cref{fig:GPS_position_measurements} shows RTK-GPS position measurements, while \Cref{fig:GPS_rotation_measurements} shows RTK-GPS rotation measurements.
+
+\newpage
 
 \begin{figure}[h]
     \centering
@@ -204,6 +206,8 @@ While the RTK-GPS sensor is very accurate globally, it is not always precise loc
     \label[figure]{fig:GPS_position_measurements}
 \end{figure}
 
+The position measurements seem very precise, since they all lie along a continuous line that follows the railway track. However, it could be that there are longitudinal jumps between frames, meaning that the data might not be as precise in measuring the position along the track. This could explain some inconsistencies in \Cref{fig:nearby_multi-frame_final_correspondences}, where the position does not seem to be consistent with the reprojected tracks.
+
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.95\textwidth]{images/GPS_rotation_measurements.png}
@@ -211,9 +215,8 @@ While the RTK-GPS sensor is very accurate globally, it is not always precise loc
     \label[figure]{fig:GPS_rotation_measurements}
 \end{figure}
 
-The position measurements seem very precise, since they all lie along a continuous line that follows the railway track. However, it could be that there are longitudinal jumps between frames, meaning that the data might not be as precise in measuring the position along the track. This could explain some inconsistencies in \Cref{fig:nearby_multi-frame_final_correspondences}, where the position does not seem to be consistent with the reprojected tracks.
+When it comes to RTK-GPS rotation measurements in \Cref{fig:GPS_rotation_measurements}, the data is not as precise. In all three dimensions it varies by up to 0.5 degrees between frames while it should effectively stay the same on this straight track segment. Combining this small error in all three dimensions and considering the fact that small rotations can lead to large reprojection errors, it is likely a big factor in the inconsistent reprojections. This would explain the inconsistencies in \Cref{fig:multi-frame_final_correspondences}, where the rotation does not match the reprojections.
 
-When it comes to RTK-GPS rotation measurements, the data is also not very precise. In all three dimensions it varies by up to 0.5 degrees between frames while it should effectively stay the same on this straight track segment. Combining this small error in all three dimensions and considering the fact that small rotations can lead to large reprojection errors, it is likely a big factor in the inconsistent reprojections. This would explain the inconsistencies in \Cref{fig:multi-frame_final_correspondences}, where the rotation does not match the reprojections.
 
 Comparing the RTK-GPS height measurements (blue) with the local elevation data (red) in \Cref{fig:GPS_height_measurements}, it appears that the former are very precise, while the latter varies by up to 0.2 m across frames. Yet, small errors in the elevation data (used for creating the 3D point clouds per railway track) are unlikely to be a big factor in the inconsistent reprojections, since all frames are affected equally. Also note that, for the RTK-GPS height measurements, there have been some outliers in the data (not visible in the graph), which are likely due to bad signal or else. Avoiding these outliers is important, but otherwise the GPS height measurements do not seem to be the issue.
 
@@ -228,7 +231,7 @@ Finally, the railway nodes from the OpenStreetMap data are also a possible sourc
 
 In conclusion, if the above data sources were more precise, the reprojections would be more consistent across frames. This would lead to better results when optimizing multiple frames together.
 
-\subsection*{Recommendations}
+\subsection{Recommendations}
 
 In order to overcome the limitations of the data and obtain more precise state estimates, it would be very useful to implement a sensor fusion algorithm, such as a Kalman Filter. This means combining the RTK-GPS sensor with available IMU and odometry data. The RTK-GPS sensor is very accurate globally, but not very precise locally. The IMU and odometry are precise locally, but drift over time. By combining all three, it is possible to obtain a more precise state estimate that is both precise locally and globally. This would lead to reduced reprojection errors across frames.
 
