@@ -2,37 +2,31 @@
 
 **<b>"Online Extrinsic Camera Calibration from Multiple Keyframes using Map Information"</b>**
 
-This project implements an algorithm to compute the relative pose between a GPS sensor and an intrinsically-calibrated camera at the front of a track vehicle (mounted rigidly in an unknown location that is to be inferred from its images).
-
-Building upon the previous work done by Nicolina (branch: main) this project aims to come up with a more reliable and generalizable estimation process. To achieve this, map information is combined with detected railway tracks using an iterative optimization approach that leverages information across multiple frames.
-
-Note that the detection pipeline is not implemented (yet), but annotated railway features are used to simulate their input. Moreover, in contrast to single-frame, the multi-frame optimization is somewhat limited by the data accuracy, so ideally a sensor fusion approach would be used to combine the GPS data with IMU and odometry information.
+This project implements an algorithm to compute the relative pose between a GPS sensor and an intrinsically-calibrated camera at the front of a track vehicle (mounted rigidly in an unknown location that is to be inferred from its images). Building upon the previous work by Nicolina (branch: main) this project aims to come up with a more reliable and generalizable estimation process. To achieve this, map information is combined with detected railway tracks using an optimization approach based on iterative closest points (ICP) that leverages information across multiple frames. Note that the detection pipeline is not implemented yet; instead annotations are used to simulate observed tracks. Moreover, in contrast to single-frame, multi-frame optimization is somewhat limited by data accuracy. To address this, sensor fusion should be implemented combining the GPS data with IMU and odometry information in order to obtain a more precise state estimate.
 
 ## Input Data
 
-Store the relevant input data locally and specific the paths in 'data.py'.
+Store the relevant input data locally and specific the paths in `data.py`. The current structure uses 'path_to_data' as the root directory, which contains the subdirectories 'map', 'elevation', and 'frames'. The latter contains the subdirectories 'frames/poses', 'frames/images' and 'frames/annotations' (the last two for each camera separately).
 
 ### Elevation
 
-Will be downloaded automatically when calling `MapInfo.get_elevation(x_gps, y_gps)` from the website https://data.geobasis-bb.de/geobasis/daten/dgm/xyz/ and stored as local files under the specified path.
+Obtained automatically when running the pipeline, which calls the method `MapInfo.get_elevation(x_gps, y_gps)`. The data is downloaded from the website https://data.geobasis-bb.de/geobasis/daten/dgm/xyz/ and stored as local files under the specified path `path_to_elevation_data` (e.g. the 'elevation' subdirectory).
 
 ### Railway Map (OSM)
 
-Store the relevant OSM file locally and specify its path in `data.py`.
+Store the relevant OSM file locally (e.g. in the 'map' subdirectory) and specify `path_to_osm_file`. 
 
 ### Frames
 
-Synchronous data from a stereo camera setup and various sensors:
-- RTK-GPS, (IMU, vehicle odometry)
-- Images for each camera
+Each frame contains synchronous data from a stereo camera setup and various sensors, where the same frame corresponds to the same filename (i.e. number 000000).:
+- Images for each camera (JPG files)
+- Poses from RTK-GPS (YAML files), by extension also from IMU and odometry
 
-This data can be extracted from ROS bag files, which are recorded using the ROS node `image_gps_sync`. Edit the file `image_gps_sync.py` to export the required data and specify the correct output paths.
+This data can be extracted from ROS bags, which are recorded and synchronized using the ROS node `image_gps_sync`. Edit the file `image_gps_sync.py` to export the required data (stereo images and GPS poses, plus optionally IMU and/or odometry) and specify the correct output paths. An edited copy of this file is added to the Git root directory for convenience.
 
-After building the ROS system with the required files, here are some useful commands:
+After building the ROS system with all other required files, here are some useful commands to speed up the process:
+
 ```terminal
-# Navigate to the workspace
-cd catkin_ws
-
 # Initialise ROS
 roscore
 
@@ -52,9 +46,7 @@ rostopic list
 
 ### Annotations
 
-Manually created using the tool https://www.robots.ox.ac.uk/~vgg/software/via/, by uploading the relevant images and drawing each railway track as a sequence of points. The annotations can be exported as a CSV file, which are read by the `Annotation` class.
-
-
+Manually created using the tool https://www.robots.ox.ac.uk/~vgg/software/via/, by uploading the relevant images and drawing each railway track as a sequence of points. The annotations can be exported as a CSV file, which are read by the `Annotation` class. Finally, specify `path_to_annotations` in `data.py`.
 
 ## Python Setup
 
