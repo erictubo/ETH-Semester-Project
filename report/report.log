@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.6.7)  17 JUL 2023 13:20
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.6.7)  17 JUL 2023 13:21
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -1065,4 +1065,182 @@ File: images/5410_optimization_initial.png Graphic file (type png)
 Package pdftex.def Info: images/5410_optimization_initial.png  used on input line 196.
 (pdftex.def)             Requested size: 173.44644pt x 108.40031pt.
  [10 <./images/0570_optimization_initial.png (PNG copy)> <./images/5410_optimization_initial.png (PNG copy)>]
-<images/optimization_multi-frame.png
+<images/optimization_multi-frame.png, id=410, 6434.0375pt x 3623.5375pt>
+File: images/optimization_multi-frame.png Graphic file (type png)
+<use images/optimization_multi-frame.png>
+Package pdftex.def Info: images/optimization_multi-frame.png  used on input line 238.
+(pdftex.def)             Requested size: 361.34999pt x 203.46962pt.
+) (./chapters/4_implementation.tex [11 <./images/optimization_multi-frame.png>]
+Chapter 4.
+[12
+
+]
+Underfull \vbox (badness 6332) has occurred while \output is active []
+
+ [13] [14]
+LaTeX Font Info:    Font shape `OML/cmr/m/n' in size <10> not available
+(Font)              Font shape `OML/cmm/m/it' tried instead on input line 91.
+
+Overfull \hbox (2.21288pt too wide) in paragraph at lines 91--92
+[]|\OT1/cmr/m/n/10 std::vector\OML/cmm/m/it/10 <\OT1/cmr/m/n/10 Eigen::Vector2d\OML/cmm/m/it/10 >| 
+ []
+
+
+Overfull \hbox (2.21288pt too wide) in paragraph at lines 92--93
+[]|\OT1/cmr/m/n/10 std::vector\OML/cmm/m/it/10 <\OT1/cmr/m/n/10 Eigen::Vector3d\OML/cmm/m/it/10 >| 
+ []
+
+) (./chapters/5_results.tex [15]
+Chapter 5.
+<images/0490_optimization_final.png, id=467, 1927.2pt x 1204.5pt>
+File: images/0490_optimization_final.png Graphic file (type png)
+<use images/0490_optimization_final.png>
+Package pdftex.def Info: images/0490_optimization_final.png  used on input line 15.
+(pdftex.def)             Requested size: 173.44644pt x 108.40031pt.
+<images/0570_optimization_final.png, id=468, 1927.2pt x 1204.5pt>
+File: images/0570_optimization_final.png Graphic file (type png)
+<use images/0570_optimization_final.png>
+Package pdftex.def Info: images/0570_optimization_final.png  used on input line 19.
+(pdftex.def)             Requested size: 173.44644pt x 108.40031pt.
+<images/0950_optimization_final.png, id=469, 1927.2pt x 1204.5pt>
+File: images/0950_optimization_final.png Graphic file (type png)
+<use images/0950_optimization_final.png>
+Package pdftex.def Info: images/0950_optimization_final.png  used on input line 23.
+(pdftex.def)             Requested size: 173.44644pt x 108.40031pt.
+<images/5410_optimization_final.png, id=470, 1927.2pt x 1204.5pt>
+File: images/5410_optimization_final.png Graphic file (type png)
+<use images/5410_optimization_final.png>
+Package pdftex.def Info: images/5410_optimization_final.png  used on input line 27.
+(pdftex.def)             Requested size: 173.44644pt x 108.40031pt.
+[16
+
+ <./images/0490_optimization_final.png (PNG copy)> <./images/0570_optimization_final.png (PNG copy)> <./images/0950_optimization_final.png (PNG copy)> <./images/5410_optimization_final.png (PNG copy)>]
+<images/0950_optimization_initial.png, id=477, 1927.2pt x 1204.5pt>
+File: images/0950_optimization_initial.png Graphic file (type png)
+<use images/0950_optimization_initial.png>
+Package pdftex.def Info: images/0950_optimization_initial.png  used on input line 50.
+(pdftex.def)             Requested size: 173.44644pt x 108.40031pt.
+File: images/0950_optimization_final.png Graphic file (type png)
+<use images/0950_optimization_final.png>
+Package pdftex.def Info: images/0950_optimization_final.png  used on input line 54.
+(pdftex.def)             Requested size: 173.44644pt x 108.40031pt.
+ [17 <./images/0950_optimization_initial.png (PNG copy)>] [18]
+<images/0490_optimization_initial_crop.jpg, id=493, 1606.0pt x 1204.5pt>
+File: images/0490_optimization_initial_crop.jpg Graphic file (type jpg)
+<use images/0490_optimization_initial_crop.jpg>
+Package pdftex.def Info: images/0490_optimization_initial_crop.jpg  used on input line 103.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/0570_optimization_initial_crop.jpg, id=494, 1606.0pt x 1204.5pt>
+File: images/0570_optimization_initial_crop.jpg Graphic file (type jpg)
+<use images/0570_optimization_initial_crop.jpg>
+Package pdftex.def Info: images/0570_optimization_initial_crop.jpg  used on input line 107.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/0950_optimization_initial_crop.jpg, id=495, 1606.0pt x 1204.5pt>
+File: images/0950_optimization_initial_crop.jpg Graphic file (type jpg)
+<use images/0950_optimization_initial_crop.jpg>
+Package pdftex.def Info: images/0950_optimization_initial_crop.jpg  used on input line 111.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/0490_multi-frame_final_crop.jpg, id=496, 1606.0pt x 1204.5pt>
+File: images/0490_multi-frame_final_crop.jpg Graphic file (type jpg)
+<use images/0490_multi-frame_final_crop.jpg>
+Package pdftex.def Info: images/0490_multi-frame_final_crop.jpg  used on input line 120.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/0570_multi-frame_final_crop.jpg, id=497, 1606.0pt x 1204.5pt>
+File: images/0570_multi-frame_final_crop.jpg Graphic file (type jpg)
+<use images/0570_multi-frame_final_crop.jpg>
+Package pdftex.def Info: images/0570_multi-frame_final_crop.jpg  used on input line 124.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/0950_multi-frame_final_crop.jpg, id=498, 1606.0pt x 1204.5pt>
+File: images/0950_multi-frame_final_crop.jpg Graphic file (type jpg)
+<use images/0950_multi-frame_final_crop.jpg>
+Package pdftex.def Info: images/0950_multi-frame_final_crop.jpg  used on input line 128.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/0490_optimization_final_crop.jpg, id=499, 1606.0pt x 1204.5pt>
+File: images/0490_optimization_final_crop.jpg Graphic file (type jpg)
+<use images/0490_optimization_final_crop.jpg>
+Package pdftex.def Info: images/0490_optimization_final_crop.jpg  used on input line 137.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/0570_optimization_final_crop.jpg, id=500, 1606.0pt x 1204.5pt>
+File: images/0570_optimization_final_crop.jpg Graphic file (type jpg)
+<use images/0570_optimization_final_crop.jpg>
+Package pdftex.def Info: images/0570_optimization_final_crop.jpg  used on input line 141.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/0950_optimization_final_crop.jpg, id=501, 1606.0pt x 1204.5pt>
+File: images/0950_optimization_final_crop.jpg Graphic file (type jpg)
+<use images/0950_optimization_final_crop.jpg>
+Package pdftex.def Info: images/0950_optimization_final_crop.jpg  used on input line 145.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+ [19 <./images/0490_optimization_initial_crop.jpg> <./images/0570_optimization_initial_crop.jpg> <./images/0950_optimization_initial_crop.jpg> <./images/0490_multi-frame_final_crop.jpg> <./images/0570_multi-frame_final_crop.jpg> <./images/0950_multi-frame_final_crop.jpg> <./images/0490_optimization_final_crop.jpg> <./images/0570_optimization_final_crop.jpg> <./images/0950_optimization_final_crop.jpg>]
+<images/1900_nearby_multi-frame_initial_crop.jpg, id=513, 1606.0pt x 1204.5pt>
+File: images/1900_nearby_multi-frame_initial_crop.jpg Graphic file (type jpg)
+<use images/1900_nearby_multi-frame_initial_crop.jpg>
+Package pdftex.def Info: images/1900_nearby_multi-frame_initial_crop.jpg  used on input line 160.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/1905_nearby_multi-frame_initial_crop.jpg, id=514, 1606.0pt x 1204.5pt>
+File: images/1905_nearby_multi-frame_initial_crop.jpg Graphic file (type jpg)
+<use images/1905_nearby_multi-frame_initial_crop.jpg>
+Package pdftex.def Info: images/1905_nearby_multi-frame_initial_crop.jpg  used on input line 164.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/1910_nearby_multi-frame_initial_crop.jpg, id=515, 1606.0pt x 1204.5pt>
+File: images/1910_nearby_multi-frame_initial_crop.jpg Graphic file (type jpg)
+<use images/1910_nearby_multi-frame_initial_crop.jpg>
+Package pdftex.def Info: images/1910_nearby_multi-frame_initial_crop.jpg  used on input line 168.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/1900_nearby_multi-frame_final_crop.jpg, id=516, 1606.0pt x 1204.5pt>
+File: images/1900_nearby_multi-frame_final_crop.jpg Graphic file (type jpg)
+<use images/1900_nearby_multi-frame_final_crop.jpg>
+Package pdftex.def Info: images/1900_nearby_multi-frame_final_crop.jpg  used on input line 177.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/1905_nearby_multi-frame_final_crop.jpg, id=517, 1606.0pt x 1204.5pt>
+File: images/1905_nearby_multi-frame_final_crop.jpg Graphic file (type jpg)
+<use images/1905_nearby_multi-frame_final_crop.jpg>
+Package pdftex.def Info: images/1905_nearby_multi-frame_final_crop.jpg  used on input line 181.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+<images/1910_nearby_multi-frame_final_crop.jpg, id=518, 1606.0pt x 1204.5pt>
+File: images/1910_nearby_multi-frame_final_crop.jpg Graphic file (type jpg)
+<use images/1910_nearby_multi-frame_final_crop.jpg>
+Package pdftex.def Info: images/1910_nearby_multi-frame_final_crop.jpg  used on input line 185.
+(pdftex.def)             Requested size: 115.63464pt x 86.7129pt.
+ [20 <./images/1900_nearby_multi-frame_initial_crop.jpg> <./images/1905_nearby_multi-frame_initial_crop.jpg> <./images/1910_nearby_multi-frame_initial_crop.jpg> <./images/1900_nearby_multi-frame_final_crop.jpg> <./images/1905_nearby_multi-frame_final_crop.jpg> <./images/1910_nearby_multi-frame_final_crop.jpg>]
+<images/GPS_position_measurements.png, id=531, 663.47874pt x 394.47375pt>
+File: images/GPS_position_measurements.png Graphic file (type png)
+<use images/GPS_position_measurements.png>
+Package pdftex.def Info: images/GPS_position_measurements.png  used on input line 204.
+(pdftex.def)             Requested size: 307.14969pt x 182.6158pt.
+<images/GPS_rotation_measurements.png, id=533, 589.0005pt x 383.7537pt>
+File: images/GPS_rotation_measurements.png Graphic file (type png)
+<use images/GPS_rotation_measurements.png>
+Package pdftex.def Info: images/GPS_rotation_measurements.png  used on input line 213.
+(pdftex.def)             Requested size: 343.28139pt x 223.66643pt.
+ [21 <./images/GPS_position_measurements.png> <./images/GPS_rotation_measurements.png>]
+<images/GPS_height_measurements.png, id=543, 618.31pt x 377.41pt>
+File: images/GPS_height_measurements.png Graphic file (type png)
+<use images/GPS_height_measurements.png>
+Package pdftex.def Info: images/GPS_height_measurements.png  used on input line 225.
+(pdftex.def)             Requested size: 252.94388pt x 154.39357pt.
+) (./chapters/6_conclusion.tex [22 <./images/GPS_height_measurements.png>]
+Chapter 6.
+) (./report.bbl [23
+
+]) [24
+
+] (./report.aux)
+Package rerunfilecheck Info: File `report.out' has not changed.
+(rerunfilecheck)             Checksum: 4E26B91F12CC82E1BB065F69F94B04FF;4819.
+ ) 
+Here is how much of TeX's memory you used:
+ 29352 strings out of 475980
+ 566771 string characters out of 5789004
+ 1868757 words of memory out of 5000000
+ 49126 multiletter control sequences out of 15000+600000
+ 521706 words of font info for 63 fonts, out of 8000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 104i,23n,97p,835b,568s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb>
+Output written on report.pdf (32 pages, 72516288 bytes).
+PDF statistics:
+ 653 PDF objects out of 1000 (max. 8388607)
+ 523 compressed objects within 6 object streams
+ 144 named destinations out of 1000 (max. 500000)
+ 490 words of extra memory for PDF output out of 10000 (max. 10000000)
+
