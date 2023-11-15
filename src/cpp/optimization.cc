@@ -216,14 +216,14 @@ void DrawCorrespondences(
     const std::vector<int>& correspondence_indices,
     const std::vector<Eigen::Vector2d>& observed_2D_points,
     const std::vector<Eigen::Vector2d>& reprojected_2D_points,
-    cv::Mat& visualisation) {
+    cv::Mat& visualization) {
 
     assert(correspondence_indices.size() == observed_2D_points.size());
 
     // Draw correspondences as lines
     for (int i = 0; i < correspondence_indices.size(); ++i) {
         if (correspondence_indices[i] != -1) {
-            cv::line(visualisation,
+            cv::line(visualization,
                     cv::Point2d(observed_2D_points[i][0], observed_2D_points[i][1]),
                     cv::Point2d(reprojected_2D_points[correspondence_indices[i]][0], reprojected_2D_points[correspondence_indices[i]][1]),
                     cv::Scalar(0, 255, 0));
@@ -232,7 +232,7 @@ void DrawCorrespondences(
 
     // Draw observed points
     for (int i = 0; i < observed_2D_points.size(); ++i) {
-        cv::circle(visualisation, cv::Point2d(observed_2D_points[i][0], observed_2D_points[i][1]), 3, cv::Scalar(255, 0, 0), -1);
+        cv::circle(visualization, cv::Point2d(observed_2D_points[i][0], observed_2D_points[i][1]), 3, cv::Scalar(255, 0, 0), -1);
     }
 
     // Draw reprojected points (if inside image)
@@ -240,20 +240,21 @@ void DrawCorrespondences(
         if (std::isnan(reprojected_2D_points[i][0]) || std::isnan(reprojected_2D_points[i][1])) {
             continue;
         } else {
-            cv::circle(visualisation, cv::Point2d(reprojected_2D_points[i][0], reprojected_2D_points[i][1]), 3, cv::Scalar(0, 0, 255), -1);
+            cv::circle(visualization, cv::Point2d(reprojected_2D_points[i][0], reprojected_2D_points[i][1]), 3, cv::Scalar(0, 0, 255), -1);
         }
     }
 }
 
 
-void SaveVisualisation(
-    const cv::Mat& visualisation,
+void SaveVisualization(
+    const cv::Mat& visualization,
     const std::string& filename,
     const std::string& camera_id,
-    const int& iteration) {
+    const int& iteration,
+    const std::string& visualization_path) {
     
-    std::string path = "/Users/eric/Developer/Cam2GPS/visualisation/optimization/" + filename + "_cam_" + camera_id + "_it_" + std::to_string(iteration) + ".png";
-    cv::imwrite(path, visualisation);
+    std::string path = visualization_path + filename + "_cam_" + camera_id + "_it_" + std::to_string(iteration) + ".png";
+    cv::imwrite(path, visualization);
 }
 
 
@@ -298,7 +299,8 @@ void cpp_reset_keyframes() {
 void cpp_update_camera_pose(
     double camera_pose[7],
     const double camera_intrinsics[4],
-    int iterations) {
+    int iterations,
+    const std::string& visualization_path) {
 
     int num_keyframes = keyframes.size();
     std::cout << "num_keyframes: " << num_keyframes << std::endl;
@@ -327,9 +329,9 @@ void cpp_update_camera_pose(
             FindCorrespondences(observed_2D_points, reprojected_2D_points, correspondence_indices);
 
             // Visualise and save
-            cv::Mat visualisation = image.clone();
-            DrawCorrespondences(correspondence_indices, observed_2D_points, reprojected_2D_points, visualisation);
-            SaveVisualisation(visualisation, filename, camera_id, iteration);
+            cv::Mat visualization = image.clone();
+            DrawCorrespondences(correspondence_indices, observed_2D_points, reprojected_2D_points, visualization);
+            SaveVisualization(visualization, filename, camera_id, iteration, visualization_path);
 
             // Add residuals to problem
             for (size_t i = 0; i < num_observed_points; ++i) {
@@ -411,7 +413,8 @@ void py_reset_keyframes() {
 py::array py_update_camera_pose(
     py::array_t<double, py::array::c_style | py::array::forcecast> camera_pose,
     py::array_t<double, py::array::c_style | py::array::forcecast> camera_intrinsics,
-    py::int_ iterations) {
+    py::int_ iterations,
+    py::str visualization_path) {
 
     if (camera_pose.shape()[0] != 7) {
         throw std::runtime_error("camera_pose must have 7 elements: [x, y, z, qx, qy, qz, qw]");
@@ -429,10 +432,13 @@ py::array py_update_camera_pose(
     int iterations_cpp;
     iterations_cpp = iterations;
 
+    std::string visualization_path_cpp = visualization_path;
+
     cpp_update_camera_pose(
         camera_pose_cpp,
         camera_intrinsics_cpp,
-        iterations_cpp);
+        iterations_cpp,
+        visualization_path_cpp);
 
     // Convert back to numpy array
     py::array_t<double> final_camera_pose(7);

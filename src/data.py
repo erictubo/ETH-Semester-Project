@@ -9,7 +9,7 @@ track_width = 1.435
 # pole_height = 5.3
 
 # Folder containing all data
-path_to_data = '/Users/eric/Developer/Cam2GPS/'
+path_to_data = '/Users/eric/Library/CloudStorage/OneDrive-Personal/Documents/Studies/MSc Robotics/Semester Project/Data/'
 
 # Elevation data
 path_to_elevation_data = path_to_data + "elevation/"
@@ -25,7 +25,7 @@ path_to_osm_file = path_to_data + "map/potsdam2.osm"
 
 # Frames: images & poses
 # 0: camera 0, 1: camera 1
-path_to_frames = str(path_to_data + 'frames/2462/')
+path_to_frames = str(path_to_data + 'frames/sync/')
 path_to_poses  = str(path_to_frames + 'poses/')
 path_to_images_0 = str(path_to_frames + 'images_0/')
 path_to_images_1 = str(path_to_frames + 'images_1/')
@@ -33,3 +33,15 @@ path_to_annotations_0 = path_to_frames + 'annotations_0/annotations.csv'
 path_to_annotations_1 = path_to_frames + 'annotations_1/annotations.csv'
 
 railway_object_file = 'railway.pkl'
+
+# Visualization
+path_to_visualization = path_to_data + 'visualization/'
+path_to_visualization_initial = path_to_visualization + 'initial/'
+path_to_visualization_optimization = path_to_visualization + 'optimization/'
+path_to_visualization_final = path_to_visualization + 'final/'
+
+
+# check that all visualization paths exist
+for path in [path_to_visualization, path_to_visualization_initial, path_to_visualization_optimization, path_to_visualization_final]:
+    if not os.path.exists(path):
+        os.makedirs(path)
