@@ -22,9 +22,9 @@ class GPS:
 
         # Extracted from pose: heading, rotation, position, H matrix
         try:
-            self.heading = self.__extract_heading__(pose)
             self.position = self.__extract_position__(pose)
             self.quaternions = self.__extract_quaternions__(pose)
+            self.heading = self.__extract_heading__(pose)
             
         except:
             self.is_missing_data = True
@@ -51,12 +51,6 @@ class GPS:
 
 
     @staticmethod
-    def __extract_heading__(pose) -> float:
-        heading = float(pose.get('heading'))
-        assert not np.isnan(heading)
-        return heading
-
-    @staticmethod
     def __extract_position__(pose) -> np.ndarray[float]:
         position = np.array([[float(pose.get('p_x'))], [float(pose.get('p_y'))], [float(pose.get('p_z'))]]).squeeze()
         assert position.shape == (3,), position.shape
@@ -71,6 +65,15 @@ class GPS:
         assert quaternions.shape == (4,), quaternions.shape
         assert not np.isnan(quaternions.any())
         return quaternions
+    
+    def __extract_heading__(self, pose) -> float:
+        try:
+            heading = float(pose.get('heading'))
+            assert not np.isnan(heading)
+        except:
+            euler_angles = Transformation.convert_quaternions(self.quaternions, to_type='euler angles')
+            heading = euler_angles[2] * 180 / np.pi
+        return heading
     
     def __get_local_points_in_tracks__(self, railway: 'Railway', r_ahead: float=None, r_behind: float=None, min_points: int=2):
         local_tracks, local_points_in_tracks = railway.get_local_points_in_tracks(self, r_ahead, r_behind, min_points)
