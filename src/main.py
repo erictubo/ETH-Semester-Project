@@ -9,7 +9,7 @@ import cv2
 import matplotlib.pyplot as plt
 
 # Methods & Data
-from data import railway_object_file, path_to_visualization_initial, path_to_visualization_optimization, path_to_visualization_final
+import data
 from camera import Camera
 from railway import Railway
 
@@ -120,15 +120,15 @@ max_gap = 20
 r_ahead = 100
 r_behind = 50
 
-if (not os.path.isfile(railway_object_file)) or (input("Create a new railway object? [y/n]: ") == 'y'):
+if (not os.path.isfile(data.railway_object_file)) or (input("Create a new railway object? [y/n]: ") == 'y'):
     frames = create_frames(frame_ids, include_elevation=False)
     railway = Railway(frames, max_gap=max_gap, r_ahead=r_ahead, r_behind=r_behind)
-    with open(railway_object_file, 'wb') as file:
+    with open(data.railway_object_file, 'wb') as file:
         pickle.dump(railway, file)
         print("Railway object sucessfully saved to file.")
 else:
     print("Loading railway object from file")
-    with open(railway_object_file, 'rb') as file:
+    with open(data.railway_object_file, 'rb') as file:
         railway = pickle.load(file)
 
 
@@ -231,20 +231,20 @@ for i, keyframe in enumerate(keyframes):
     annotated_visual_0 = keyframe.annotation_0.visualise_splines_and_points()
     annotated_visual_1 = keyframe.annotation_1.visualise_splines_and_points()
 
-    cv2.imwrite(path_to_visualization_initial + keyframe.filename + "_annotated_0.jpg", annotated_visual_0)
-    cv2.imwrite(path_to_visualization_initial + keyframe.filename + "_annotated_1.jpg", annotated_visual_1)
+    cv2.imwrite(data.path_to_visualization_initial + keyframe.filename + "_annotated_0.jpg", annotated_visual_0)
+    cv2.imwrite(data.path_to_visualization_initial + keyframe.filename + "_annotated_1.jpg", annotated_visual_1)
 
     reprojected_visual_0 = keyframe.visualise_reprojected_and_original_points(camera_0)
     reprojected_visual_1 = keyframe.visualise_reprojected_and_original_points(camera_1)
     
-    cv2.imwrite(path_to_visualization_initial + keyframe.filename + "_reprojected_0.jpg", reprojected_visual_0)
-    cv2.imwrite(path_to_visualization_initial + keyframe.filename + "_reprojected_1.jpg", reprojected_visual_1)
+    cv2.imwrite(data.path_to_visualization_initial + keyframe.filename + "_reprojected_0.jpg", reprojected_visual_0)
+    cv2.imwrite(data.path_to_visualization_initial + keyframe.filename + "_reprojected_1.jpg", reprojected_visual_1)
 
     combined_visual_0 = keyframe.visualise_reprojected_points(camera_0, keyframe.annotation_0.visualise_splines())
     combined_visual_1 = keyframe.visualise_reprojected_points(camera_1, keyframe.annotation_1.visualise_splines())
 
-    cv2.imwrite(path_to_visualization_initial + keyframe.filename + "_combined_0.jpg", combined_visual_0)
-    cv2.imwrite(path_to_visualization_initial + keyframe.filename + "_combined_1.jpg", combined_visual_1)
+    cv2.imwrite(data.path_to_visualization_initial + keyframe.filename + "_combined_0.jpg", combined_visual_0)
+    cv2.imwrite(data.path_to_visualization_initial + keyframe.filename + "_combined_1.jpg", combined_visual_1)
 
 
 """
@@ -269,7 +269,7 @@ for keyframe in keyframes:
         keyframe.annotation_0.array,
         keyframe.points_gps_array_0)
 
-new_camera_pose = cpp.optimization.update_camera_pose(camera_0.pose_vector, camera_0.intrinsics_vector, iterations, path_to_visualization_optimization)
+new_camera_pose = cpp.optimization.update_camera_pose(camera_0.pose_vector, camera_0.intrinsics_vector, iterations, data.path_to_visualization_optimization)
 camera_0.update_pose(new_camera_pose)
 
 
@@ -288,7 +288,7 @@ for keyframe in keyframes:
         keyframe.annotation_1.array,
         keyframe.points_gps_array_1)
     
-new_camera_pose = cpp.optimization.update_camera_pose(camera_1.pose_vector, camera_1.intrinsics_vector, iterations, path_to_visualization_optimization)
+new_camera_pose = cpp.optimization.update_camera_pose(camera_1.pose_vector, camera_1.intrinsics_vector, iterations, data.path_to_visualization_optimization)
 camera_1.update_pose(new_camera_pose)
 
 
@@ -341,17 +341,17 @@ for i, keyframe in enumerate(keyframes):
     # annotated_visual_0 = keyframe.annotation_0.visualise_splines_and_points()
     # annotated_visual_1 = keyframe.annotation_1.visualise_splines_and_points()
 
-    # cv2.imwrite(path_to_visualization_final + keyframe.filename + "_annotated_0.jpg", annotated_visual_0)
-    # cv2.imwrite(path_to_visualization_final + keyframe.filename + "_annotated_1.jpg", annotated_visual_1)
+    # cv2.imwrite(data.path_to_visualization_final + keyframe.filename + "_annotated_0.jpg", annotated_visual_0)
+    # cv2.imwrite(data.path_to_visualization_final + keyframe.filename + "_annotated_1.jpg", annotated_visual_1)
 
     # reprojected_visual_0 = keyframe.visualise_reprojected_and_original_points(camera_0)
     # reprojected_visual_1 = keyframe.visualise_reprojected_and_original_points(camera_1)
     
-    # cv2.imwrite(path_to_visualization_final + keyframe.filename + "_reprojected_0.jpg", reprojected_visual_0)
-    # cv2.imwrite(path_to_visualization_final + keyframe.filename + "_reprojected_1.jpg", reprojected_visual_1)
+    # cv2.imwrite(data.path_to_visualization_final + keyframe.filename + "_reprojected_0.jpg", reprojected_visual_0)
+    # cv2.imwrite(data.path_to_visualization_final + keyframe.filename + "_reprojected_1.jpg", reprojected_visual_1)
 
     combined_visual_0 = keyframe.visualise_reprojected_points(camera_0, keyframe.annotation_0.visualise_splines())
     combined_visual_1 = keyframe.visualise_reprojected_points(camera_1, keyframe.annotation_1.visualise_splines())
 
-    cv2.imwrite(path_to_visualization_final + keyframe.filename + "_combined_0.jpg", combined_visual_0)
-    cv2.imwrite(path_to_visualization_final + keyframe.filename + "_combined_1.jpg", combined_visual_1)
+    cv2.imwrite(data.path_to_visualization_final + keyframe.filename + "_combined_0.jpg", combined_visual_0)
+    cv2.imwrite(data.path_to_visualization_final + keyframe.filename + "_combined_1.jpg", combined_visual_1)
