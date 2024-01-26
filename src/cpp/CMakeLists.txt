@@ -6,9 +6,9 @@ set(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_INSTALL_PREFIX .)
 
 # Set the policy for FindPython
-if(POLICY CMP0148)
-    cmake_policy(SET CMP0148 NEW)
-endif()
+# if(POLICY CMP0148)
+#     cmake_policy(SET CMP0148 NEW)
+# endif()
 
 # Find Python and its libraries
 # find_package(Python 3.9.6 EXACT COMPONENTS Interpreter Development REQUIRED)
@@ -32,7 +32,6 @@ pybind11_add_module(optimization optimization.cc)
 target_link_libraries(optimization 
   PRIVATE
     ${CERES_LIBRARIES}
-    Python::Python
     ${OpenCV_LIBS}
     # ${MY_LIBRARIES}
     # pybind11::embed
