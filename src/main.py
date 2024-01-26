@@ -16,6 +16,10 @@ from railway import Railway
 from keyframe import Frame, Keyframe
 from transformation import Transformation
 
+import sys
+src_directory = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, src_directory)
+
 import cpp.optimization
 
 

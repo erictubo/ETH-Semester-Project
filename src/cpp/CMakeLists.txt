@@ -1,9 +1,20 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.12)
 
 project(optimization)
 
 set(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_INSTALL_PREFIX .)
+
+# set(Python_INCLUDE_DIR "/opt/homebrew/Frameworks/Python.framework/Versions/3.12/include/python3.12")
+# set(Python_LIBRARIES "/opt/homebrew/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib")
+
+# Set the policy for FindPython
+if(POLICY CMP0148)
+    cmake_policy(SET CMP0148 NEW)
+endif()
+
+# Find Python and its libraries
+find_package(Python 3.9.6 EXACT COMPONENTS Interpreter Development REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 find_package(Ceres REQUIRED)
@@ -12,7 +23,7 @@ find_package(gflags REQUIRED)
 # find_package(SuiteSparse REQUIRED)
 find_package(OpenCV REQUIRED)
 
-include_directories(${CERES_INCLUDE_DIRS}, ${OpenCV_INCLUDE_DIRS})
+include_directories(${CERES_INCLUDE_DIRS} ${EIGEN3_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS})
 
 # find_package(pybind11 REQUIRED)
 add_subdirectory(pybind11)
@@ -24,20 +35,14 @@ pybind11_add_module(optimization optimization.cc)
 target_link_libraries(optimization 
   PRIVATE
     ${CERES_LIBRARIES}
+    Python::Python
+    ${OpenCV_LIBS}
     # ${MY_LIBRARIES}
     # pybind11::embed
+    pybind11::pybind11
     )
 
-# target_include_directories(optimization
-#   PRIVATE
-#     ${CERES_INCLUDE_DIRS}
-#     ${EIGEN3_INCLUDE_DIRS}
-#     ${GLOG_INCLUDE_DIRS}
-#     ${GFLAGS_INCLUDE_DIRS}
-    # ${SUITESPARSE_INCLUDE_DIRS}
-    # ${pybind11_INCLUDE_DIRS}
-# )
-
+# Install the target
 install (TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ..
 )

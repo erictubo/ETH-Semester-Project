@@ -58,8 +58,13 @@ struct CameraProjectionCostFunctor {
         const Eigen::Vector2d observed_2D_point,
         const Eigen::Vector3d gps_3D_point,
         const double* camera_intrinsics) {
-        CameraProjectionCostFunctor* functor = new CameraProjectionCostFunctor(observed_2D_point, gps_3D_point, camera_intrinsics);
-        return new ceres::AutoDiffCostFunction<CameraProjectionCostFunctor, 2, 7>(functor);
+        try {
+            CameraProjectionCostFunctor* functor = new CameraProjectionCostFunctor(observed_2D_point, gps_3D_point, camera_intrinsics);
+            return new ceres::AutoDiffCostFunction<CameraProjectionCostFunctor, 2, 7>(functor);
+        } catch (const std::bad_alloc& e) {
+            std::cerr << "Memory allocation failed: " << e.what() << '\n';
+            return nullptr;
+        }
     }
 
     const Eigen::Vector2d observed_2D_point;
