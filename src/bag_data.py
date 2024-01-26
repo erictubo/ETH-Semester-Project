@@ -12,10 +12,10 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 
 
-path_to_bags = '/Volumes/T7 Shield/Cam2GPS Data/'
+path_to_bags = '/Users/eric/Downloads/Data/bags/'
 
 camera_bag_name = 'outside_2019-06-05-14-54-00.bag'
-camera_imu_topic = 'imu_came'
+camera_imu_topic = 'imu_camera'
 image_0_topic = '/image_0' #'/bas_usb_0/image_raw'
 image_1_topic = '/image_1' #'/bas_usb_1/image_raw'
 
