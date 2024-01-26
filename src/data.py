@@ -9,7 +9,7 @@ track_width = 1.435
 # pole_height = 5.3
 
 # Folder containing all data
-path_to_data = '/Users/eric/Downloads/Data/'
+path_to_data = '/media/psf/Data/'
 
 # Elevation data
 path_to_elevation_data = path_to_data + "elevation/"
@@ -35,7 +35,7 @@ path_to_annotations_1 = path_to_frames + 'annotations_1/annotations.csv'
 railway_object_file = 'railway.pkl'
 
 # Visualization
-path_to_visualization = path_to_data + 'visualization/'
+path_to_visualization = '/media/psf/visualization/'
 path_to_visualization_initial = path_to_visualization + 'initial/'
 path_to_visualization_optimization = path_to_visualization + 'optimization/'
 path_to_visualization_final = path_to_visualization + 'final/'

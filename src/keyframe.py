@@ -11,7 +11,7 @@ from data import path_to_images_0, path_to_images_1, path_to_poses
 from gps import GPS
 from annotation import Annotation
 from transformation import Transformation
-from visualisation import Visualisation
+from visualization import Visualization
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -164,7 +164,7 @@ class Keyframe(Frame):
     PUBLIC METHODS
     """
 
-    def visualise_reprojected_points(self, camera: 'Camera', visual: np.ndarray=None, color: tuple=(0,0,255)):
+    def visualize_reprojected_points(self, camera: 'Camera', visual: np.ndarray=None, color: tuple=(0,0,255)):
         """
         Set color to "random" to get a different color for each track
         """
@@ -183,11 +183,11 @@ class Keyframe(Frame):
             else:
                 color_track = color
             pixels = Transformation.project_points_to_pixels(camera, camera.H_cam_gps, points_gps)
-            Visualisation.draw_on_image(visual, pixels, False, color_track)
+            Visualization.draw_on_image(visual, pixels, False, color_track)
         return visual
         
 
-    def visualise_original_points(self, camera: 'Camera', visual: np.ndarray=None, color: tuple=(0,255,255)):
+    def visualize_original_points(self, camera: 'Camera', visual: np.ndarray=None, color: tuple=(0,255,255)):
         if visual is None:
             if camera.id == 0:
                 visual = self.image_0.copy()
@@ -198,10 +198,10 @@ class Keyframe(Frame):
             points_w = self.gps.local_points_in_tracks[track]
             points_gps = Transformation.transform_points(self.gps.H_gps_w, points_w)
             pixels = Transformation.project_points_to_pixels(camera, camera.H_cam_gps, points_gps)
-            Visualisation.draw_on_image(visual, pixels, False, color)
+            Visualization.draw_on_image(visual, pixels, False, color)
         return visual
     
-    def visualise_reprojected_and_original_points(self, camera: 'Camera', visual: np.ndarray=None, colors: list[tuple]=[(0,0,255), (0,255,255)]):
-        visual = self.visualise_reprojected_points(camera, visual, colors[0])
-        visual = self.visualise_original_points(camera, visual, colors[1])
+    def visualize_reprojected_and_original_points(self, camera: 'Camera', visual: np.ndarray=None, colors: list[tuple]=[(0,0,255), (0,255,255)]):
+        visual = self.visualize_reprojected_points(camera, visual, colors[0])
+        visual = self.visualize_original_points(camera, visual, colors[1])
         return visual

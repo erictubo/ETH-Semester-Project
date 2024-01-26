@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 # Data & methods
 from data import path_to_osm_file
 from map_info import MapInfo
-from visualisation import Visualisation
+from visualization import Visualization
 from import_osm import (railway_map as RailwayMap, track_node as TrackNode, track_segment as TrackSegment)
 
 from typing import TYPE_CHECKING
@@ -73,35 +73,35 @@ class Railway:
         self.railway_map.plotly(plotly.graph_objs.Figure())
 
     
-    def visualise_2D(self, show_tracks=True, show_nodes=True, frames: list['Frame'] = []):
+    def visualize_2D(self, show_tracks=True, show_nodes=True, frames: list['Frame'] = []):
         if show_tracks:
             for track in self.tracks:
                 for point in self.points_in_tracks_2D[track]:
-                    Visualisation.plot_XY(point[0], point[1], 'orange')
+                    Visualization.plot_XY(point[0], point[1], 'orange')
         if show_nodes:
             for node in self.nodes:
-                Visualisation.plot_XY(node.x, node.y, color='red')
+                Visualization.plot_XY(node.x, node.y, color='red')
         if len(frames) > 0:
             for frame in frames:
                 point = frame.gps.t_w_gps
-                Visualisation.plot_XY(point[0], point[1], 'black')
+                Visualization.plot_XY(point[0], point[1], 'black')
                 #plt.Circle((point[0], point[1]), r_ahead, 'red')
         plt.xlabel("Position X [m]")
         plt.ylabel("Position Y [m]")
-        Visualisation.show_plot()
+        Visualization.show_plot()
 
-    def visualise_3D(self, frames: list['Frame'] = []):
-        ax = Visualisation.create_3D_plot("All points in tracks")
+    def visualize_3D(self, frames: list['Frame'] = []):
+        ax = Visualization.create_3D_plot("All points in tracks")
         for track in self.tracks:
             color = 'blue'
             if track.is_bridge:
                 color = 'cyan'
             points = self.points_in_tracks_3D[track]
-            Visualisation.plot_3D_points(ax, points, color)
+            Visualization.plot_3D_points(ax, points, color)
         for frame in frames:
             point = frame.gps.t_w_gps
-            Visualisation.plot_3D_points(ax, [point], 'red')
-        Visualisation.show_plot()
+            Visualization.plot_3D_points(ax, [point], 'red')
+        Visualization.show_plot()
 
 
     # Hidden methods: called at initialisation

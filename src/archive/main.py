@@ -9,7 +9,7 @@ from keyframe import KeyFrame
 from camera import Camera
 from gps import MapInfo
 from transformation import Transformation
-from visualisation import Visualisation
+from visualization import Visualisation
 
 
 

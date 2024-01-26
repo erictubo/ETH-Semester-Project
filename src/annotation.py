@@ -9,7 +9,7 @@ import cv2
 from data import path_to_annotations_0, path_to_annotations_1
 from transformation import Transformation
 from camera import Camera
-from visualisation import Visualisation
+from visualization import Visualization
 
 
 class Annotation():
@@ -88,26 +88,26 @@ class Annotation():
 
     # Public methods
 
-    def visualise_splines(self, visual=None, color: tuple=(255,0,0)):
+    def visualize_splines(self, visual=None, color: tuple=(255,0,0)):
         if visual is None:
             visual = self.image.copy()
 
         for spline in self.splines:
-            Visualisation.draw_on_image(visual, spline, False, color)
+            Visualization.draw_on_image(visual, spline, False, color)
         return visual
 
 
-    def visualise_points(self, visual=None, color: tuple=(255,255,0)):
+    def visualize_points(self, visual=None, color: tuple=(255,255,0)):
 
         if visual is None:
             visual = self.image.copy()
 
         for pixel_sequence in self.pixel_sequences:
-            Visualisation.draw_on_image(visual, pixel_sequence, False, color)
+            Visualization.draw_on_image(visual, pixel_sequence, False, color)
         return visual
     
     
-    def visualise_splines_and_points(self, visual = None, colors: list[tuple]=[(255,0,0), (255,255,0)]):
-        visual = self.visualise_splines(visual, colors[0])
-        visual = self.visualise_points(visual, colors[1])
+    def visualize_splines_and_points(self, visual = None, colors: list[tuple]=[(255,0,0), (255,255,0)]):
+        visual = self.visualize_splines(visual, colors[0])
+        visual = self.visualize_points(visual, colors[1])
         return visual

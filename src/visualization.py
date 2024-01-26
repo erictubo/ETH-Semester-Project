@@ -10,7 +10,7 @@ import cv2
 from transformation import Transformation
 
 
-class Visualisation:
+class Visualization:
 
     @staticmethod
     def draw_on_image(image: cv2.Mat, pixels: list[np.ndarray[int]], lines: list[np.ndarray[int]], colors_BGR = (0,0,255), thickness=3, outside_pixels="ignore") -> cv2.Mat:
@@ -127,7 +127,7 @@ class Visualisation:
     @staticmethod
     def plot_3D_points(ax, points: list[np.ndarray], color: str='blue', scale = 'equal'):
         X, Y, Z = Transformation.convert_points_list(points, to_type="components")
-        Visualisation.plot_XYZ(ax, X, Y, Z, color, scale)
+        Visualization.plot_XYZ(ax, X, Y, Z, color, scale)
 
     @staticmethod
     def plot_XYZ(ax, X, Y, Z, color: str='blue', scale = 'equal'):
