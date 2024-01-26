@@ -8,3 +8,4 @@ scipy==1.11.1
 setuptools==67.5.1
 tqdm==4.65.0
 utm==0.7.0
+bagpy==0.5

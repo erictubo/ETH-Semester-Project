@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
+import os
 import yaml
 import cv2
 import time
@@ -9,18 +9,21 @@ import numpy as np
 from rosbag import Bag
 from rospy import Time
 from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
 
 
-path_to_bags = '/Volumes/T7 Shield/Cam2GPS Data/'
+# Directories to read from and write to
+path_to_bags   = '/media/psf/Data/bags/'
+path_to_frames = '/media/psf/frames_new/'
 
+# ROS bag with camera data
 camera_bag_name = 'outside_2019-06-05-14-54-00.bag'
-camera_imu_topic = 'imu_came'
-image_0_topic = '/image_0' #'/bas_usb_0/image_raw'
-image_1_topic = '/image_1' #'/bas_usb_1/image_raw'
+camera_imu_topic = 'imu_camera'
+image_0_topic = '/bas_usb_0/image_raw'
+image_1_topic = '/bas_usb_1/image_raw'
 
+# ROS bag with gps data
 gps_bag_name = 'synced_gps_imu_ekf.bag'
-gps_topic = '/gps'
+gps_gps_topic = '/gps'
 gps_imu_topic = '/imu_gps'
 ekf_gps_topic = '/ekf_gps'
 
@@ -31,7 +34,7 @@ class BagData:
                  path_to_bags: str,
                  gps_bag_name: str,
                  camera_bag_name: str = None, # will not initialize camera bag if no camera_bag_name is given
-                 gps_pose_topic: str = '/gps',
+                 gps_pose_topic: str = '/gps', # alternative: ekf_gps_topic
                  image_0_topic: str = '/bas_usb_0/image_raw',
                  image_1_topic: str = '/bas_usb_1/image_raw',
                  ):
@@ -170,7 +173,7 @@ class BagData:
 
         gps_pose_type = self.gps_bag.types_by_topic[self.gps_pose_topic]
 
-        if gps_pose_type == 'nav_msgs/Odometry':
+        if gps_pose_type in ['nav_msgs/Odometry', 'geometry_msgs/PoseWithCovarianceStamped']:
             p_x = msg.pose.pose.position.x
             p_y = msg.pose.pose.position.y
             p_z = msg.pose.pose.position.z
@@ -185,23 +188,14 @@ class BagData:
             pose_array = np.array([p_x, p_y, p_z, q_x, q_y, q_z, q_w])
             pose_dict: dict[str:float] = {'p_x':p_x, 'p_y':p_y, 'p_z':p_z, 'q_x':q_x, 'q_y':q_y, 'q_z':q_z, 'q_w':q_w, 'time':found_time}
 
-            # TODO: get heading (= yaw euler angle) from quaternions
-            # from transformation import Transformation
-            # Transformation.convert_quaternions(quaternion, to_type='euler angles')
-
-            # TODO: make compatible with Frame/Keyframe/GPS objects for data import
+            # IDEA: make compatible with Frame/Keyframe/GPS objects for data import
         
-        elif gps_pose_type == 'gps_common/GPSFix':
-            print('not yet implemented GPS output type')
-
-        elif gps_pose_type == 'geometry_msgs/PoseWithCovarianceStamped':
-            print('not yet implemented EKF output type')
-
         else:
-            print(f'type {gps_pose_type} not implemented')
+            raise NotImplementedError(f'gps_pose_type {gps_pose_type} not implemented')
 
         if output_type == 'numpy array':
             return pose_array, found_time
+        
         elif output_type == 'dictionary':
             return pose_dict, found_time
         
@@ -251,14 +245,28 @@ class BagData:
         return pose, image_0, image_1, found_time_pose, found_time_image_0, found_time_image_1
     
 
-    def save_gps_pose_and_images_at_time(self, time: float, path_to_poses: str, path_to_images_0: str, path_to_images_1: str, name: str = None):
+    def export_frame(self, path_to_frames: str, time: float, name: str = None, print_info: bool = True):
 
-        assert path_to_images_0 != path_to_images_1, print('path_to_images_0 and path_to_images_1 must be different')
-        
-        pose, image_0, image_1, found_time_pose, found_time_image_0, found_time_image_1 = self.find_gps_pose_and_images_at_time(time, 'numpy array')
+        path_to_images_0 = path_to_frames + 'images_0/'
+        path_to_images_1 = path_to_frames + 'images_1/'
+        path_to_poses = path_to_frames + 'poses/'
+
+        for path in [path_to_frames, path_to_images_0, path_to_images_1, path_to_poses]:
+            if not os.path.exists(path):
+                os.makedirs(path)
 
         if not name:
             name = str(time).replace('.', '_')
+
+        if print_info:
+            print(f'Searching time {name}: {time}')
+        
+        pose, image_0, image_1, found_time_pose, found_time_image_0, found_time_image_1 = self.find_gps_pose_and_images_at_time(time, 'numpy array')
+
+        if print_info:
+            print(f'Found pose time: {found_time_pose}')
+            print(f'Pose: {pose}')
+            print(f'Found image times: {found_time_image_0}, {found_time_image_1}')
 
         with open(path_to_poses + name + '.yaml', 'w') as outfile:
             yaml.dump(pose, outfile)
@@ -266,37 +274,26 @@ class BagData:
         cv2.imwrite(path_to_images_0 + name + '.jpg', image_0)
         cv2.imwrite(path_to_images_1 + name + '.jpg', image_1)
 
-
-# Times of annotated stereo images
-time_000490 = 1559739264.6531134
-time_000570 = 1559739270.133156
-time_000950 = 1559739302.7131376
-
-test_image_time = 1559739296.962946
+        if print_info:
+            print('---')
 
 
-bag_data = BagData(path_to_bags, gps_bag_name, camera_bag_name)
+    def export_frames(self, path_to_frames: str, times: list[float], names: list[str] = None, print_info: bool = True):
 
-path_to_images_0 = path_to_bags + 'images_0/'
-path_to_images_1 = path_to_bags + 'images_1/'
-path_to_poses = path_to_bags + 'poses/'
+        if names:
+            assert len(times) == len(names), print('times and names must have the same length')
+
+        for i in range(len(times)):
+            self.export_frame(path_to_frames, times[i], names[i], print_info)
 
 
-for time, name in zip([time_000490, time_000570, time_000950], ['000490', '000570', '000950']):
+# 1. Annotate images
+# 2. Export frames at timestamps of annotations
+# 3. Run optimization with exported frames
 
-    print(f'Searching time {name}: {time}')
+times = [1559739264.6531134, 1559739270.133156, 1559739302.7131376]
+names = ['000490', '000570', '000950']
 
-    pose_dict, found_time = bag_data.find_gps_pose_at_time(time, 'dictionary')
-    print(f'Found pose time: {found_time}')
-    print(f'Pose: {pose_dict}')
-    
-    with open(path_to_poses + name + '.yaml', 'w') as outfile:
-            yaml.dump(pose_dict, outfile)
-    
-    found_images = bag_data.find_images_at_time(time)
-    print(f'Found image times: {found_images[2]}, {found_images[3]}')
+bag_data = BagData(path_to_bags, gps_bag_name, camera_bag_name, gps_pose_topic=ekf_gps_topic)
 
-    cv2.imwrite(path_to_images_0 + name + '.jpg', found_images[0])
-    cv2.imwrite(path_to_images_1 + name + '.jpg', found_images[1])
-    
-    print('---')
+bag_data.export_frames(path_to_frames, times, names, print_info=True)
