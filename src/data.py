@@ -9,7 +9,7 @@ track_width = 1.435
 # pole_height = 5.3
 
 # Folder containing all data
-path_to_data = '/Users/eric/Library/CloudStorage/OneDrive-Personal/Documents/Studies/MSc Robotics/Semester Project/Data/'
+path_to_data = '/Users/eric/Downloads/Data/'
 
 # Elevation data
 path_to_elevation_data = path_to_data + "elevation/"

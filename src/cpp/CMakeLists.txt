@@ -5,16 +5,13 @@ project(optimization)
 set(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_INSTALL_PREFIX .)
 
-# set(Python_INCLUDE_DIR "/opt/homebrew/Frameworks/Python.framework/Versions/3.12/include/python3.12")
-# set(Python_LIBRARIES "/opt/homebrew/Frameworks/Python.framework/Versions/3.12/lib/libpython3.12.dylib")
-
 # Set the policy for FindPython
 if(POLICY CMP0148)
     cmake_policy(SET CMP0148 NEW)
 endif()
 
 # Find Python and its libraries
-find_package(Python 3.9.6 EXACT COMPONENTS Interpreter Development REQUIRED)
+# find_package(Python 3.9.6 EXACT COMPONENTS Interpreter Development REQUIRED)
 
 find_package(Eigen3 REQUIRED)
 find_package(Ceres REQUIRED)
