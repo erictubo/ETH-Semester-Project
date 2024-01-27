@@ -1,10 +1,12 @@
 # Multi-Frame Extrinsics Optimization
 
+[Report](Report.pdf) | [Presentation](Presentation.pdf)
+
 **"Online Extrinsic Camera Calibration from Multiple Keyframes using Map Information"**
 
-This project implements an algorithm to compute the relative pose between a GPS sensor and an intrinsically-calibrated camera at the front of a track vehicle (mounted rigidly in an unknown location that is to be inferred from its images). Building upon the previous work by Nicolina (branch: main) this project aims to come up with a more reliable and generalizable estimation process. To achieve this, map information is combined with detected railway tracks using an optimization approach based on iterative closest points (ICP) that leverages information across multiple frames.
+This project implements an algorithm to compute the relative pose between a GPS sensor and an intrinsically-calibrated camera at the front of a track vehicle (mounted rigidly in an unknown location that is to be inferred from its images). To achieve this, map information is combined with detected railway tracks using an optimization approach based on iterative closest points (ICP) that leverages information across multiple frames.
 
-Note that the detection pipeline is not implemented yet; instead annotations are used to simulate observed tracks.
+Note that the detection pipeline is not implemented; instead annotations are used to simulate observed tracks.
 
 Moreover, in contrast to single-frame, multi-frame optimization has been somewhat limited by data accuracy. To address this, sensor fusion has been implemented via an EKF to combine GPS with IMU data in order to obtain a more precise state estimate.
 
@@ -135,4 +137,4 @@ More info and/or troubleshooting: <https://pybind11.readthedocs.io/en/latest/com
 
 Author: Eric Tüschenbönner
 
-E-mail: <etueschenboe@student.ethz.ch>
+E-mail: <eric.tueschenboenner@gmail.com>
