@@ -1,16 +1,35 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Defines the Camera class for camera intrinsics, pose, undistortion, and projection operations.
+
+Provides methods for transforming and projecting 3D points into image space and handling camera-specific operations throughout the pipeline.
+"""
 
 import numpy as np
 import cv2
 
 
 class Camera:
+    """
+    Camera model with intrinsics, distortion, pose, and projection utilities.
+    """
 
     def __init__(self, id: int, focal_length: tuple[int], principal_point: list[float], image_size: list[float],
                  distortion_coefficients: list[float], distortion_model='equidistant', camera_model='pinhole',
                  initial_H_gps_cam=np.array([[0,0,1,0], [-1,0,0,0], [0,-1,0,0], [0,0,0,1]])):
-
+        """
+        Initialize a Camera object with intrinsics, distortion, and initial pose.
+        Args:
+            id: Camera ID (int).
+            focal_length: (fx, fy).
+            principal_point: (cx, cy).
+            image_size: (width, height).
+            distortion_coefficients: List of distortion coefficients.
+            distortion_model: Distortion model (default: 'equidistant').
+            camera_model: Camera model (default: 'pinhole').
+            initial_H_gps_cam: Initial homogeneous transformation from GPS to camera.
+        """
         self.id = id
         self.focal_length = focal_length
         self.principal_point = principal_point
@@ -50,6 +69,11 @@ class Camera:
 
     @staticmethod
     def __create_intrinsics_matrix__(fx: float, fy: float, cx: float, cy: float) -> np.ndarray:
+        """
+        Create a camera intrinsics matrix from fx, fy, cx, cy.
+        Returns:
+            3x3 numpy array.
+        """
         K = np.array([[fx, 0, cx],
                       [0, fy, cy],
                       [0,  0,  1]])
@@ -58,6 +82,11 @@ class Camera:
 
     @staticmethod
     def __get_intrinsics_from_matrix__(K: np.ndarray):
+        """
+        Extract fx, fy, cx, cy from a camera intrinsics matrix.
+        Returns:
+            fx, fy, cx, cy
+        """
         assert K.shape == (3,3), K.shape
         fx = K[0][0]
         fy = K[1][1]
@@ -71,6 +100,11 @@ class Camera:
     """
 
     def update_pose(self, new_pose_vector: np.ndarray):
+        """
+        Update the camera pose vector and associated transformation matrices.
+        Args:
+            new_pose_vector: New pose vector (7,).
+        """
         assert new_pose_vector.shape == self.pose_vector.shape, (new_pose_vector.shape, self.pose_vector.shape)
         self.pose_vector = new_pose_vector
 
@@ -80,12 +114,26 @@ class Camera:
 
 
     def undistort_image(self, distorted_image):
+        """
+        Undistort an image using the camera's distortion parameters.
+        Args:
+            distorted_image: Input distorted image.
+        Returns:
+            Undistorted image.
+        """
         image = distorted_image.copy()
         undistorted_image = cv2.remap(image, self.map1, self.map2, interpolation=cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
         return undistorted_image
 
 
     def undistort_points(self, points: list[np.ndarray]) -> list[np.ndarray]:
+        """
+        Undistort a list of 2D points using the camera's distortion parameters.
+        Args:
+            points: List of 2D points (np.ndarray).
+        Returns:
+            List of undistorted 2D points (np.ndarray).
+        """
         points_array = np.squeeze(np.asarray(points))
         points_array = np.array([points_array], dtype=np.float32)
 
@@ -104,9 +152,11 @@ class Camera:
 
     def project_point(self, point_cam: np.ndarray) -> np.ndarray:
         """
-        Project single point in camera frame (3,) to pixel (2,),
-        given the intrinsic camera parameters (via Camera object).
-        If point is behind the camera, it will be ignored.
+        Project a single 3D point in the camera frame to a 2D pixel. Ignores point if it is behind the camera.
+        Args:
+            point_cam: 3D point in camera frame.
+        Returns:
+            2D pixel coordinates (np.ndarray).
         """
         assert self.K.shape == (3,3)
         assert point_cam.shape in [(3,), (3,1)], point_cam.shape
@@ -122,13 +172,15 @@ class Camera:
 
     def project_points(self, points_cam: list[np.ndarray]) -> list[np.ndarray]:
         """
-        Project multiple points in the camera frame (3,) to pixels (2,),
-        given the intrinsic camera parameters (via Camera object).
-        Any points behind the camera will be ignored.
+        Project multiple 3D points in the camera frame to 2D pixels. Ignores any points behind the camera.
+        Args:
+            points_cam: List of 3D points in camera frame.
+        Returns:
+            List of 2D pixel coordinates (np.ndarray).
         """
         pixels = []
         for point_cam in points_cam:
-            pixel = self.project_camera_point_to_pixel(point_cam)
+            pixel = self.project_point(point_cam)
             if type(pixel) == np.ndarray:
                 pixels.append(pixel)
         # print(len(pixels), "/", len(Ps_cam), "points in front of camera")

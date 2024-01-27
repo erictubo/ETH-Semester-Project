@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Processes and manages railway map data for the camera localization pipeline.
+
+Handles extraction, interpolation, and elevation assignment for railway tracks using OSM and elevation data. Provides visualization utilities for 2D/3D railway maps.
+"""
 
 # External libraries
 import plotly
@@ -11,6 +16,8 @@ import matplotlib.pyplot as plt
 from data import path_to_osm_file
 from map_info import MapInfo
 from visualization import Visualization
+
+# OSM railway data processing (C. von Einem, ETH Zurich)
 from import_osm import (railway_map as RailwayMap, track_node as TrackNode, track_segment as TrackSegment)
 
 from typing import TYPE_CHECKING
@@ -35,14 +42,19 @@ Attributes of railway_map:
 
 class Railway:
     """
-    Processed railway in combined map area of given keyframes
-    - this will import relevant railway nodes, interpolate gaps between railway nodes,
-    add elevation data, create compatible tracks, etc.
-    - trade-off: requires initial pre-processing time, but enables much faster reprojection loop
+    Represents a processed railway in the combined map area of given keyframes.
+    Imports relevant railway nodes, interpolates gaps, adds elevation data, and creates compatible tracks.
     """
 
     def __init__(self, frames: list['Frame'], max_gap: float, r_ahead: float, r_behind: float):
-
+        """
+        Initialize a Railway object from a list of frames and parameters.
+        Args:
+            frames: List of Frame objects.
+            max_gap: Maximum allowed gap between points for interpolation (meters).
+            r_ahead: Search radius ahead of each frame (meters).
+            r_behind: Search radius behind each frame (meters).
+        """
         self.max_gap = max_gap
         self.r_ahead = r_ahead
         self.r_behind = r_behind
@@ -70,10 +82,20 @@ class Railway:
 
 
     def plot_map(self):
+        """
+        Visualize the railway map using Plotly.
+        """
         self.railway_map.plotly(plotly.graph_objs.Figure())
 
     
     def visualize_2D(self, show_tracks=True, show_nodes=True, frames: list['Frame'] = []):
+        """
+        Visualize the 2D railway map, nodes, and optionally frames.
+        Args:
+            show_tracks: Whether to show tracks (default: True).
+            show_nodes: Whether to show nodes (default: True).
+            frames: List of Frame objects to plot (default: empty).
+        """
         if show_tracks:
             for track in self.tracks:
                 for point in self.points_in_tracks_2D[track]:
@@ -91,6 +113,11 @@ class Railway:
         Visualization.show_plot()
 
     def visualize_3D(self, frames: list['Frame'] = []):
+        """
+        Visualize the 3D railway map and optionally frames.
+        Args:
+            frames: List of Frame objects to plot (default: empty).
+        """
         ax = Visualization.create_3D_plot("All points in tracks")
         for track in self.tracks:
             color = 'blue'
@@ -107,6 +134,15 @@ class Railway:
     # Hidden methods: called at initialisation
 
     def __get_relevant_nodes__(self, frames: list['Frame'], r_ahead: float, r_behind: float):
+        """
+        Get relevant railway nodes within a search radius of each frame.
+        Args:
+            frames: List of Frame objects.
+            r_ahead: Search radius ahead (meters).
+            r_behind: Search radius behind (meters).
+        Returns:
+            List of relevant TrackNode objects.
+        """
         nodes: list[TrackNode] = []
         for frame in frames:
             local_nodes = Railway.select_local_nodes(self.railway_map.railway_nodes, frame, r_ahead, r_behind)
@@ -117,6 +153,13 @@ class Railway:
 
 
     def __get_tracks_of_nodes__(self, nodes: list[TrackNode]):
+        """
+        Get tracks associated with each node.
+        Args:
+            nodes: List of TrackNode objects.
+        Returns:
+            Tuple (tracks, tracks_of_nodes).
+        """
         tracks: list[TrackSegment] = []
         tracks_of_nodes: dict[TrackNode: list[TrackSegment]] = {}
         for node in nodes:
@@ -131,6 +174,14 @@ class Railway:
 
 
     def __get_nodes_in_tracks__(self, tracks: list[TrackSegment], nodes: list[TrackNode]):
+        """
+        Get nodes associated with each track.
+        Args:
+            tracks: List of TrackSegment objects.
+            nodes: List of TrackNode objects.
+        Returns:
+            Dictionary mapping TrackSegment to list of TrackNode.
+        """
         nodes_in_tracks: dict[TrackSegment: list[TrackNode]] = {}
         for track in tracks:
             nodes_in_track: list[TrackNode] = []
@@ -144,7 +195,15 @@ class Railway:
 
     @staticmethod
     def __convert_nodes_to_gapless_2D_points_in_tracks__(tracks: list[TrackSegment], nodes_in_tracks: dict[TrackSegment: list[TrackNode]], max_gap):
-
+        """
+        Interpolate nodes to create gapless 2D points along each track.
+        Args:
+            tracks: List of TrackSegment objects.
+            nodes_in_tracks: Dictionary mapping TrackSegment to list of TrackNode.
+            max_gap: Maximum allowed gap between points (meters).
+        Returns:
+            Dictionary mapping TrackSegment to list of 2D points (np.ndarray).
+        """
         points_2D_in_tracks: dict[TrackSegment: list[np.ndarray]] = {}
 
         for track in tracks:
@@ -181,7 +240,14 @@ class Railway:
 
     @staticmethod
     def __convert_2D_to_3D_points_in_tracks__(tracks: list[TrackSegment], points_2D_in_tracks: dict[TrackSegment: list[np.ndarray]] = {}):
-
+        """
+        Add elevation to 2D points to create 3D points for each track.
+        Args:
+            tracks: List of TrackSegment objects.
+            points_2D_in_tracks: Dictionary mapping TrackSegment to list of 2D points.
+        Returns:
+            Dictionary mapping TrackSegment to list of 3D points (np.ndarray).
+        """
         points_3D_in_tracks: dict[TrackSegment: list[np.ndarray]] = {}
 
         for track in tracks:
@@ -221,8 +287,17 @@ class Railway:
     
 
     @staticmethod
-    def add_elevation_to_2D_point(point_2D: np.ndarray, custom_elevation: float=None):
+    def add_elevation_to_2D_point(point_2D: np.ndarray, custom_elevation: float=None) -> np.ndarray:
+        """
+        Add elevation to a 2D point to create a 3D point.
 
+        Args:
+            point_2D: 2D point as a numpy array.
+            custom_elevation: Optional custom elevation value. If None, uses MapInfo.get_elevation.
+
+        Returns:
+            3D point as a numpy array.
+        """
         assert point_2D.shape[0] == 2
         x = float(point_2D[0])
         y = float(point_2D[1])
@@ -237,6 +312,16 @@ class Railway:
 
     @staticmethod
     def convert_node_to_point(node: TrackNode, add_elevation=True) -> np.ndarray:
+        """
+        Convert a TrackNode to a 2D or 3D point.
+
+        Args:
+            node: TrackNode object.
+            add_elevation: If True, add elevation to create a 3D point.
+
+        Returns:
+            2D or 3D point as a numpy array.
+        """
         x = node.x
         y = node.y
         if add_elevation:
@@ -249,15 +334,37 @@ class Railway:
 
     @staticmethod
     def convert_nodes_to_points(nodes: list[TrackNode], add_elevation=True) -> list[np.ndarray]:
+        """
+        Convert a list of TrackNode objects to 2D or 3D points.
+
+        Args:
+            nodes: List of TrackNode objects.
+            add_elevation: If True, add elevation to create 3D points.
+
+        Returns:
+            List of 2D or 3D points as numpy arrays.
+        """
         points = []
         for node in nodes:
-            Railway.convert_node_to_point(node, add_elevation)
+            point = Railway.convert_node_to_point(node, add_elevation)
+            points.append(point)
         return points
 
 
     @staticmethod
-    def select_local_nodes(nodes: list[TrackNode], frame: 'Frame', r_ahead: float, r_behind: float = 0):
-        """ Selects local nodes at frame GPS pose, according to r_ahead, r_behind """
+    def select_local_nodes(nodes: list[TrackNode], frame: 'Frame', r_ahead: float, r_behind: float = 0) -> list[TrackNode]:
+        """
+        Select railway nodes within a search radius ahead/behind a frame.
+
+        Args:
+            nodes: List of TrackNode objects.
+            frame: Frame object.
+            r_ahead: Search radius ahead (meters).
+            r_behind: Search radius behind (meters).
+
+        Returns:
+            List of TrackNode objects within the specified radius.
+        """
         heading, p_x, p_y = frame.gps.heading, frame.gps.x_w_gps, frame.gps.y_w_gps
         grad_x = np.cos(heading*np.pi/180)
         grad_y = np.sin(heading*np.pi/180)
@@ -279,7 +386,20 @@ class Railway:
     """
 
     def get_local_points_in_tracks(self, gps: 'GPS', r_ahead: float=None, r_behind: float=None, min_points: int=2):
+        """
+        Get local points in tracks for a given GPS position.
 
+        Args:
+            gps: GPS object.
+            r_ahead: Optional search radius ahead (meters).
+            r_behind: Optional search radius behind (meters).
+            min_points: Minimum number of points per track (default: 2).
+
+        Returns:
+            Tuple (local_tracks, local_points_in_tracks):
+                local_tracks: List of local TrackSegment objects.
+                local_points_in_tracks: Dict mapping TrackSegment to list of points.
+        """
         if r_ahead == None:
             r_ahead = self.r_ahead
         if r_behind == None:

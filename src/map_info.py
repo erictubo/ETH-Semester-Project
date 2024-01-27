@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Provides methods for retrieving elevation and map information for the camera localization pipeline.
+
+Includes static methods to access elevation data and (optionally) pole locations for given GPS coordinates.
+"""
 
 # External libraries
 import numpy as np
@@ -13,18 +18,19 @@ from data import path_to_elevation_data
 
 
 class MapInfo:
-    
     """
-    Methods for retrieving:
-    - elevation
-    - poles
+    Methods for retrieving elevation and pole locations from map data.
     """
 
     @staticmethod
     def get_elevation(x_w_gps: float, y_w_gps: float):
         """
-        Retrieves elevation closest to specified GPS position [x, y]
-        Output: elevation
+        Retrieve elevation closest to specified GPS position [x, y].
+        Args:
+            x_w_gps: X coordinate (float).
+            y_w_gps: Y coordinate (float).
+        Returns:
+            Elevation (float).
         """
         x = round(x_w_gps, 1)
         y = round(y_w_gps, 1)
@@ -87,7 +93,16 @@ class MapInfo:
     def find_closest_pole(elevation: float, H_gps_w: np.ndarray[float]) -> np.ndarray:
         """
         Determines closest pole to the specified GPS position.
-        Output: pole_worldview_gps
+        
+        Args:
+            elevation: Elevation at the GPS position.
+            H_gps_w: Homogeneous transformation matrix from world to GPS frame.
+            
+        Returns:
+            3D coordinates of the closest pole in the GPS frame (np.ndarray).
+            
+        Note:
+            This method requires pole_location_dataframe to be available from data module.
         """
 
         from data import pole_location_dataframe

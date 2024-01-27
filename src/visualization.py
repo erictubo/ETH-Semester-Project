@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Visualization utilities for 2D/3D plots and image overlays in the camera localization pipeline.
+
+Provides static methods for drawing on images, plotting 2D/3D points and lines, and displaying results for debugging and evaluation.
+"""
 
 # External libraries
 import numpy as np
@@ -11,10 +16,26 @@ from transformation import Transformation
 
 
 class Visualization:
+    """
+    Static methods for drawing on images, plotting 2D/3D points and lines, and displaying results.
+    """
 
     @staticmethod
     def draw_on_image(image: cv2.Mat, pixels: list[np.ndarray[int]], lines: list[np.ndarray[int]], colors_BGR = (0,0,255), thickness=3, outside_pixels="ignore") -> cv2.Mat:
-        
+        """
+        Draws points and lines on an image for visualization.
+
+        Args:
+            image: Input image (cv2.Mat).
+            pixels: List of 2D pixel coordinates (np.ndarray).
+            lines: List of 2D lines (np.ndarray of shape (2,2)).
+            colors_BGR: Color or list of colors for drawing (B, G, R).
+            thickness: Line thickness.
+            outside_pixels: How to handle pixels outside the image ('ignore' or 'assert').
+
+        Returns:
+            Image with drawn points and lines (cv2.Mat).
+        """
         h = image.shape[0]
         w = image.shape[1]
 
@@ -61,6 +82,15 @@ class Visualization:
 
     @staticmethod
     def convert_consecutive_points_to_3D_lines(points: list[np.ndarray[int]]) -> list[np.ndarray[int]]:
+        """
+        Converts a list of 3D points to a list of 3D lines connecting consecutive points.
+
+        Args:
+            points: List of 3D points (np.ndarray).
+
+        Returns:
+            List of 3D lines (np.ndarray of shape (3,2)).
+        """
         lines = []
         for i in range(len(points)-1):
             point = points[i]
@@ -76,6 +106,15 @@ class Visualization:
 
     @staticmethod
     def convert_consecutive_pixels_to_2D_lines(pixels: list[np.ndarray[int]]) -> list[np.ndarray[int]]:
+        """
+        Converts a list of 2D pixels to a list of 2D lines connecting consecutive pixels.
+
+        Args:
+            pixels: List of 2D pixel coordinates (np.ndarray).
+
+        Returns:
+            List of 2D lines (np.ndarray of shape (2,2)).
+        """
         lines = []
         if len(pixels) >= 2:
             for i in range(len(pixels)-1):
@@ -94,6 +133,15 @@ class Visualization:
     """
     @staticmethod
     def create_2D_plot(title: str):
+        """
+        Creates a 2D matplotlib plot with the given title.
+
+        Args:
+            title: Title of the plot.
+
+        Returns:
+            Matplotlib axis object for 2D plotting.
+        """
         fig = plt.figure(figsize=(5,5))
         ax = fig.add_subplot(projection='2d')
         ax.set_title(title)
@@ -104,6 +152,15 @@ class Visualization:
     
     @staticmethod
     def plot_XY(X, Y, color: str='blue', scale='equal'):
+        """
+        Plots 2D points on the current matplotlib axis.
+
+        Args:
+            X: X coordinates.
+            Y: Y coordinates.
+            color: Color of the points.
+            scale: Axis scaling ('equal' for equal aspect ratio).
+        """
         if scale=='equal':
             plt.axis('equal')
         # smaller point size
@@ -115,6 +172,15 @@ class Visualization:
 
     @staticmethod
     def create_3D_plot(title: str):
+        """
+        Creates a 3D matplotlib plot with the given title.
+
+        Args:
+            title: Title of the plot.
+
+        Returns:
+            Matplotlib 3D axis object for 3D plotting.
+        """
         fig = plt.figure(figsize=(5,5))
         ax = fig.add_subplot(projection='3d')
         ax.set_title(title)
@@ -126,11 +192,31 @@ class Visualization:
 
     @staticmethod
     def plot_3D_points(ax, points: list[np.ndarray], color: str='blue', scale = 'equal'):
+        """
+        Plots 3D points on the given matplotlib 3D axis.
+
+        Args:
+            ax: Matplotlib 3D axis.
+            points: List of 3D points (np.ndarray).
+            color: Color of the points.
+            scale: Axis scaling ('equal' for equal aspect ratio).
+        """
         X, Y, Z = Transformation.convert_points_list(points, to_type="components")
         Visualization.plot_XYZ(ax, X, Y, Z, color, scale)
 
     @staticmethod
     def plot_XYZ(ax, X, Y, Z, color: str='blue', scale = 'equal'):
+        """
+        Plots 3D points given as separate X, Y, Z arrays on the given axis.
+
+        Args:
+            ax: Matplotlib 3D axis.
+            X: X coordinates.
+            Y: Y coordinates.
+            Z: Z coordinates.
+            color: Color of the points.
+            scale: Axis scaling ('equal' for equal aspect ratio).
+        """
         ax.scatter(X, Y, Z, c=color)
 
         if scale == 'equal':
@@ -144,9 +230,19 @@ class Visualization:
 
     @staticmethod
     def plot_3D_lines(ax, lines: list[np.ndarray]):
+        """
+        Plots 3D lines on the given matplotlib 3D axis.
+
+        Args:
+            ax: Matplotlib 3D axis.
+            lines: List of 3D lines (np.ndarray of shape (3,2)).
+        """
         for line in lines:
                 ax.plot(line[0,:], line[1,:], line[2,:])
 
     @staticmethod
     def show_plot():
+        """
+        Displays the current matplotlib plot.
+        """
         plt.show()

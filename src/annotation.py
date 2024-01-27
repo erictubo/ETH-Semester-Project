@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Handles the Annotation class for processing manual image annotations of railway tracks.
+
+Loads annotations from CSV files, processes them into 2D splines, and provides visualization utilities. Used as part of Keyframe objects.
+"""
 
 import numpy as np
 import csv
@@ -13,9 +18,22 @@ from visualization import Visualization
 
 
 class Annotation():
+    """
+    Represents manual annotation of railway tracks in an image.
+    Loads, processes, and provides access to annotated pixel sequences and their interpolated splines.
+    """
 
     def __init__(self, image, camera: Camera, filename: str, distorted: bool, int_spacing=8, int_smoothing=0.5):
-
+        """
+        Initialize an Annotation object for a given image and camera.
+        Args:
+            image: The image to annotate.
+            camera: Camera object (for undistortion).
+            filename: Frame identifier (string or int).
+            distorted: Whether to undistort annotation points.
+            int_spacing: Interpolation spacing (default: 8).
+            int_smoothing: Interpolation smoothing (default: 0.5).
+        """
         self.image = image
         self.camera = camera
         self.filename = filename
@@ -29,11 +47,13 @@ class Annotation():
     # Hidden methods: called at initialisation
 
     def __read_pixel_sequences_from_csv__(self, filename):
-
         """
-        Filename: 6-digit integer identifier of frame.
+        Read pixel sequences for the given frame from the annotation CSV file.
+        Args:
+            filename: Frame identifier (string or int).
+        Returns:
+            List of pixel sequences (list of list of np.ndarray).
         """
-
         pixel_sequences: list[list[np.ndarray]] = []
 
         if self.camera.id == 0:
@@ -65,6 +85,15 @@ class Annotation():
 
 
     def __interpolate_pixel_sequences__(self, pixel_sequences: list[list[np.ndarray]], spacing, smoothing):
+        """
+        Interpolate each pixel sequence to increase point density and smoothness.
+        Args:
+            pixel_sequences: List of pixel sequences.
+            spacing: Desired spacing between points.
+            smoothing: Smoothing factor.
+        Returns:
+            List of interpolated splines (list of list of np.ndarray).
+        """
         splines: list[list[np.ndarray]] = []
         for pixel_sequence in pixel_sequences:
             spline = Transformation.interpolate_spline(points=pixel_sequence, desired_spacing=spacing, smoothing=smoothing)
@@ -77,7 +106,11 @@ class Annotation():
 
     def __convert_to_single_array__(self, splines: list[list[np.ndarray]]):
         """
-        Converts a list of splines to a single numpy array
+        Converts a list of splines to a single numpy array.
+        Args:
+            splines: List of splines (list of list of np.ndarray).
+        Returns:
+            Numpy array of all points (N, 2).
         """
         array = np.empty((0,2))
         for spline in splines:
@@ -89,6 +122,14 @@ class Annotation():
     # Public methods
 
     def visualize_splines(self, visual=None, color: tuple=(255,0,0)):
+        """
+        Draw the interpolated splines on the image.
+        Args:
+            visual: Optional image to draw on (default: copy of self.image).
+            color: Color for the splines (default: red).
+        Returns:
+            Image with splines drawn.
+        """
         if visual is None:
             visual = self.image.copy()
 
@@ -98,7 +139,14 @@ class Annotation():
 
 
     def visualize_points(self, visual=None, color: tuple=(255,255,0)):
-
+        """
+        Draw the original annotated points on the image.
+        Args:
+            visual: Optional image to draw on (default: copy of self.image).
+            color: Color for the points (default: yellow).
+        Returns:
+            Image with points drawn.
+        """
         if visual is None:
             visual = self.image.copy()
 
@@ -108,6 +156,14 @@ class Annotation():
     
     
     def visualize_splines_and_points(self, visual = None, colors: list[tuple]=[(255,0,0), (255,255,0)]):
+        """
+        Draw both splines and original points on the image.
+        Args:
+            visual: Optional image to draw on.
+            colors: List of two colors for splines and points.
+        Returns:
+            Image with both splines and points drawn.
+        """
         visual = self.visualize_splines(visual, colors[0])
         visual = self.visualize_points(visual, colors[1])
         return visual

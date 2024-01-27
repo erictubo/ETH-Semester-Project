@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Provides the Transformation class for geometric operations, coordinate transforms, and spline interpolation.
+
+This module contains static methods for working with homogeneous transformations, rotation representations, 
+coordinate frame conversions, and splines. Used throughout the pipeline for geometric computations including
+camera projections, coordinate transformations, and track processing.
+
+Classes:
+    Transformation: Static utility class for geometric transformations and coordinate operations.
+"""
 
 import numpy as np
 from scipy.spatial.transform import Rotation
@@ -10,6 +20,19 @@ from data import track_width
 
 
 class Transformation:
+    """
+    Static utility class for geometric transformations, coordinate conversions, and splines.
+    
+    This class provides comprehensive tools for:
+    - Homogeneous transformation matrix operations
+    - Rotation representation conversions (Euler angles, quaternions, rotation matrices)
+    - Coordinate frame transformations
+    - Camera projection operations
+    - Point representation conversions
+    - Spline interpolation for track processing
+    
+    All methods are static and can be called without instantiating the class.
+    """
 
     """
     1. Operations for homogeneous transformation matrices
@@ -18,8 +41,17 @@ class Transformation:
     @staticmethod
     def compile_homogeneous_transformation(R: np.ndarray, t: np.ndarray) -> np.ndarray:
         """
-        Compiles a translation vector t (3,) and rotation matrix R (3,3)
-        into a homogeneous transformation matrix (4,4).
+        Compiles a translation vector and rotation matrix into a homogeneous transformation matrix.
+        
+        Args:
+            R: Rotation matrix of shape (3, 3)
+            t: Translation vector of shape (3,) or (3, 1)
+            
+        Returns:
+            Homogeneous transformation matrix of shape (4, 4)
+            
+        Raises:
+            AssertionError: If R is not (3, 3) or t is not 3-dimensional
         """
         # if type(R) != np.ndarray:
         #     R = Rotation.as_matrix(R)
@@ -33,9 +65,16 @@ class Transformation:
     @staticmethod
     def separate_homogeneous_transformation(H: np.ndarray):
         """
-        Separates a homogeneous transformation matrix (4,4)
-        into its rotation matrix R (3,3) and translation vector t (3,).\n
-        Output: R (3,3), t (3,)
+        Separates a homogeneous transformation matrix into rotation matrix and translation vector.
+        
+        Args:
+            H: Homogeneous transformation matrix of shape (4, 4)
+            
+        Returns:
+            tuple: (R, t) where R is rotation matrix (3, 3) and t is translation vector (3,)
+            
+        Raises:
+            AssertionError: If H is not (4, 4)
         """
         assert H.shape == (4,4), H.shape
         R = H[0:3, 0:3]
@@ -45,7 +84,16 @@ class Transformation:
     @staticmethod
     def invert_homogeneous_transformation(H: np.ndarray) -> np.ndarray:
         """
-        Inverts a homogeneous transformation matrix H (4,4).
+        Inverts a homogeneous transformation matrix.
+        
+        Args:
+            H: Homogeneous transformation matrix of shape (4, 4)
+            
+        Returns:
+            Inverted homogeneous transformation matrix of shape (4, 4)
+            
+        Raises:
+            AssertionError: If H is not (4, 4)
         """
         assert H.shape == (4,4), H.shape
         R = H[0:3, 0:3]
@@ -59,7 +107,16 @@ class Transformation:
     @staticmethod
     def compile_pose_vector(H: np.ndarray):
         """
-        Compiles homogeneous transformation matrix (4,4) into pose vector (7,) [x, y, z, qw, qx, qy, qz].
+        Compiles homogeneous transformation matrix into pose vector format.
+        
+        Args:
+            H: Homogeneous transformation matrix of shape (4, 4)
+            
+        Returns:
+            Pose vector of shape (7,) in format [x, y, z, qw, qx, qy, qz]
+            
+        Raises:
+            AssertionError: If H is not (4, 4) or output is not (7,)
         """
         R, t = Transformation.separate_homogeneous_transformation(H)
         q_xyzw = Transformation.convert_rotation_matrix(R)
@@ -73,7 +130,16 @@ class Transformation:
     @staticmethod
     def uncompile_pose_vector(pose_vector: np.ndarray):
         """
-        Uncompiles pose vector (7,) [x, y, z, qw, qx, qy, qz] into homogeneous transformation matrix (4,4).
+        Uncompiles pose vector into homogeneous transformation matrix.
+        
+        Args:
+            pose_vector: Pose vector of shape (7,) in format [x, y, z, qw, qx, qy, qz]
+            
+        Returns:
+            Homogeneous transformation matrix of shape (4, 4)
+            
+        Raises:
+            AssertionError: If pose_vector is not (7,)
         """
         assert pose_vector.shape == (7,), pose_vector.shape
         t = pose_vector[0:3]
@@ -92,7 +158,18 @@ class Transformation:
     @staticmethod
     def convert_euler_angles(euler_angles: list[float], to_type: str = "rotation matrix") -> np.ndarray[float]:
         """
-        Converts euler angles to other specified parametrisation: "rotation matrix" (default) or "quaternions" (xyzw)
+        Converts euler angles to other rotation representations.
+        
+        Args:
+            euler_angles: List of 3 euler angles [yaw, pitch, roll] in radians
+            to_type: Target representation - "rotation matrix" (default) or "quaternions" (xyzw)
+            
+        Returns:
+            Rotation matrix of shape (3, 3) or quaternions of shape (4,) in xyzw format
+            
+        Raises:
+            AssertionError: If euler_angles is not length 3
+            ValueError: If to_type is not recognized
         """
         assert len(euler_angles) == 3, len(euler_angles)
         rotation = Rotation.from_euler('zyx', [[euler_angles[0], euler_angles[1], euler_angles[2]]])
@@ -111,7 +188,18 @@ class Transformation:
     @staticmethod
     def convert_quaternions(quaternions: np.ndarray[float], to_type: str = "rotation matrix") -> np.ndarray[float]:
         """
-        Converts quaternions (xyzw) to other specified parametrisation:"rotation matrix" (default) or "euler angles"
+        Converts quaternions to other rotation representations.
+        
+        Args:
+            quaternions: Quaternions of shape (4,) in xyzw format
+            to_type: Target representation - "rotation matrix" (default) or "euler angles"
+            
+        Returns:
+            Rotation matrix of shape (3, 3) or euler angles of shape (3,) [yaw, pitch, roll]
+            
+        Raises:
+            AssertionError: If quaternions is not shape (4,)
+            ValueError: If to_type is not recognized
         """
         assert quaternions.shape == (4,), quaternions.shape
         rotation = Rotation.from_quat(quaternions)
@@ -130,7 +218,18 @@ class Transformation:
     @staticmethod
     def convert_rotation_matrix(rotation_matrix, to_type: str = "quaternion"):
         """
-        Converts rotation matrix to other specified parametrisation: "quaternions" (xyzw) (default) or "euler angles"
+        Converts rotation matrix to other rotation representations.
+        
+        Args:
+            rotation_matrix: Rotation matrix of shape (3, 3)
+            to_type: Target representation - "quaternions" (xyzw) (default) or "euler angles"
+            
+        Returns:
+            Quaternions of shape (4,) in xyzw format or euler angles of shape (3,) [yaw, pitch, roll]
+            
+        Raises:
+            AssertionError: If rotation_matrix is not shape (3, 3)
+            ValueError: If to_type is not recognized
         """
         assert rotation_matrix.shape == (3,3), rotation_matrix.shape
         rotation = Rotation.from_matrix(rotation_matrix)
@@ -154,8 +253,17 @@ class Transformation:
     @staticmethod
     def transform_point(H_b_a: np.ndarray, point_a: np.ndarray) -> np.ndarray:
         """
-        Transform single point (3,) from frame a to frame b,
-        given the homogeneous transformation matrix H_b_a (4,4).
+        Transform single point from frame a to frame b using homogeneous transformation.
+        
+        Args:
+            H_b_a: Homogeneous transformation matrix from frame a to frame b, shape (4, 4)
+            point_a: Point in frame a, shape (3,) or (3, 1)
+            
+        Returns:
+            Point in frame b, shape (3,)
+            
+        Raises:
+            AssertionError: If H_b_a is not (4, 4) or point_a is not 3-dimensional
         """
         assert H_b_a.shape == (4,4), H_b_a.shape
         assert point_a.shape in [(3,), (3,1)], point_a.shape
@@ -168,8 +276,14 @@ class Transformation:
     @staticmethod
     def transform_points(H_b_a: np.ndarray, points_a: list[np.ndarray]) -> list[np.ndarray]:
         """
-        Transform multiple points list[(3,)] from frame a to frame b,
-        given the homogeneous transformation matrix H_b_a (4,4).
+        Transform multiple points from frame a to frame b using homogeneous transformation.
+        
+        Args:
+            H_b_a: Homogeneous transformation matrix from frame a to frame b, shape (4, 4)
+            points_a: List of points in frame a, each of shape (3,)
+            
+        Returns:
+            List of points in frame b, each of shape (3,)
         """
         points_b = []
         for point_a in points_a:
@@ -180,9 +294,17 @@ class Transformation:
     @staticmethod
     def project_camera_point_to_pixel(camera: Camera, point_cam: np.ndarray) -> np.ndarray:
         """
-        Project single point in camera frame (3,) to pixel (2,),
-        given the intrinsic camera parameters (via Camera object).
-        If point is behind the camera, it will be ignored.
+        Project single point in camera frame to pixel coordinates.
+        
+        Args:
+            camera: Camera object containing intrinsic parameters
+            point_cam: Point in camera frame, shape (3,) or (3, 1)
+            
+        Returns:
+            Pixel coordinates of shape (2,) or None if point is behind camera
+            
+        Raises:
+            AssertionError: If camera.K is not (3, 3) or point_cam is not 3-dimensional
         """
         assert camera.K.shape == (3,3)
         assert point_cam.shape in [(3,), (3,1)], point_cam.shape
@@ -198,9 +320,14 @@ class Transformation:
     @staticmethod
     def project_camera_points_to_pixels(camera: Camera, points_cam: list[np.ndarray]) -> list[np.ndarray]:
         """
-        Project multiple points in the camera frame (3,) to pixels (2,),
-        given the intrinsic camera parameters (via Camera object).
-        Any points behind the camera will be ignored.
+        Project multiple points in camera frame to pixel coordinates.
+        
+        Args:
+            camera: Camera object containing intrinsic parameters
+            points_cam: List of points in camera frame, each of shape (3,)
+            
+        Returns:
+            List of pixel coordinates, each of shape (2,). Points behind camera are excluded.
         """
         pixels = []
         for point_cam in points_cam:
@@ -213,9 +340,15 @@ class Transformation:
     @staticmethod
     def project_point_to_pixel(camera: Camera, H_cam_a: np.ndarray, point_a: np.ndarray) -> np.ndarray:
         """
-        Project single point from frame "a" directly to camera pixel, given both
-        the homogeneous transformation matrix H_cam_a (4,4) and
-        the intrinsic camera parameters (via Camera object).
+        Project single point from frame a directly to camera pixel coordinates.
+        
+        Args:
+            camera: Camera object containing intrinsic parameters
+            H_cam_a: Homogeneous transformation matrix from frame a to camera frame, shape (4, 4)
+            point_a: Point in frame a, shape (3,) or (3, 1)
+            
+        Returns:
+            Pixel coordinates of shape (2,) or None if point is behind camera
         """
         point_cam = Transformation.transform_points(H_cam_a, point_a)
         return Transformation.project_camera_point_to_pixel(camera, point_cam)
@@ -223,9 +356,15 @@ class Transformation:
     @staticmethod
     def project_points_to_pixels(camera: Camera, H_cam_a: np.ndarray, points_a: list[np.ndarray]) -> list[np.ndarray]:
         """
-        Project multiple points from frame "a" directly to camera pixels, given both
-        the homogeneous transformation matrix H_cam_a (4,4) and
-        the intrinsic camera parameters (via Camera object).
+        Project multiple points from frame a directly to camera pixel coordinates.
+        
+        Args:
+            camera: Camera object containing intrinsic parameters
+            H_cam_a: Homogeneous transformation matrix from frame a to camera frame, shape (4, 4)
+            points_a: List of points in frame a, each of shape (3,)
+            
+        Returns:
+            List of pixel coordinates, each of shape (2,). Points behind camera are excluded.
         """
         points_cam = Transformation.transform_points(H_cam_a, points_a)
         return Transformation.project_camera_points_to_pixels(camera, points_cam)
@@ -241,7 +380,19 @@ class Transformation:
     @staticmethod
     def convert_points_list(points: list[np.ndarray], to_type="components") -> tuple[np.ndarray]:
         """
-        Converts points "list" to "components" (default) or "array".
+        Converts a list of points to a different representation.
+
+        Args:
+            points: List of points, each of shape (2,) or (3,)
+            to_type: Target representation - 'components' (default) or 'array'
+
+        Returns:
+            If to_type is 'components': Tuple of arrays (X, Y, Z) or (X, Y)
+            If to_type is 'array': 2D array of shape (n_points, n_dimensions)
+
+        Raises:
+            AssertionError: If points have inconsistent dimensions
+            ValueError: If to_type is not recognized
         """
         points_array = np.asarray(points)
         if len(points_array.shape) > 2:
@@ -258,7 +409,19 @@ class Transformation:
     @staticmethod
     def convert_points_components(x: tuple[np.ndarray], to_type="list") -> list[np.ndarray]:
         """
-        Converts points "components" to "list" (default) or "array".
+        Converts a tuple of component arrays to a list of points.
+
+        Args:
+            x: Tuple of arrays (X, Y, Z) or (X, Y) for 2D points
+            to_type: Target representation - 'list' (default) or 'array'
+
+        Returns:
+            If to_type is 'list': List of points, each of shape (2,) or (3,)
+            If to_type is 'array': 2D array of shape (n_points, n_dimensions)
+
+        Raises:
+            AssertionError: If component arrays have inconsistent lengths
+            ValueError: If to_type is not recognized
         """
         points_array = np.asarray(x).transpose()
         assert points_array.shape == (x[0].shape[0], len(x)), \
@@ -273,7 +436,19 @@ class Transformation:
     @staticmethod
     def convert_points_array(points_array: np.ndarray, to_type: str):
         """
-        Converts points "array" (shape (n,2) or (n,3)) to "list" or "components".
+        Converts a 2D array of points to a different representation.
+
+        Args:
+            points_array: 2D array of shape (n_points, n_dimensions) where n_dimensions is 2 or 3
+            to_type: Target representation - 'list' or 'components'
+
+        Returns:
+            If to_type is 'list': List of points, each of shape (2,) or (3,)
+            If to_type is 'components': Tuple of arrays (X, Y, Z) or (X, Y)
+
+        Raises:
+            AssertionError: If points_array is not 2D or has invalid dimensions
+            ValueError: If to_type is not recognized
         """
         n = points_array.shape[0]
         dim = points_array.shape[1]
@@ -298,9 +473,22 @@ class Transformation:
 
     @staticmethod
     def interpolate_spline(points: list[np.ndarray], desired_spacing, smoothing, maximum=False):
+        """
+        Interpolates a spline through a list of points with specified spacing and smoothing.
 
-        """Spline interpolation for 2D and 3D cases -- matches input dimension."""
+        Args:
+            points: List of points, each of shape (2,) or (3,)
+            desired_spacing: Desired spacing between interpolated points in meters
+            smoothing: Smoothing factor for the spline (higher = smoother)
+            maximum: If True, returns the maximum arc length instead of interpolated points
 
+        Returns:
+            If maximum=False: List of interpolated points, each of shape (2,) or (3,)
+            If maximum=True: Maximum arc length of the spline
+
+        Raises:
+            AssertionError: If fewer than 2 points are provided
+        """
         assert(len(points)) > 1, print("Provide at least 2 points for interpolation")
 
         # reverse list if last point closer than first point
@@ -341,7 +529,18 @@ class Transformation:
 
     @staticmethod
     def separate_track_into_left_right(points: list[np.ndarray]):
+        """
+        Separates a track centerline into left and right rails based on track width.
 
+        Args:
+            points: List of centerline points, each of shape (3,)
+
+        Returns:
+            tuple: (left_points, right_points) where each is a list of points of shape (3,)
+
+        Raises:
+            AssertionError: If any point is not 3-dimensional
+        """
         points_L: list[np.ndarray] = []
         points_R: list[np.ndarray] = []
 

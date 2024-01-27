@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Defines the GPS class for handling GPS sensor data and pose extraction in the camera localization pipeline.
+
+Extracts position, orientation, and elevation from pose data, and provides methods for local track association.
+"""
 
 # External libraries
 import numpy as np
@@ -15,6 +20,9 @@ if TYPE_CHECKING:
 
 
 class GPS:
+    """
+    Handles GPS sensor data, pose extraction, and local track association.
+    """
 
     def __init__(self, pose, include_elevation=True):
 

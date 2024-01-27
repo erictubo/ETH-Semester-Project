@@ -1,3 +1,12 @@
+"""
+Parses and processes OpenStreetMap (OSM) railway data for the camera localization pipeline.
+
+Defines classes for track segments, nodes, and the railway map.
+Provides methods for extracting, visualizing, and analyzing railway network data from OSM files.
+
+Author: Cornelius von Einem, ETH Zurich - project supervisor for Semester Project related to his PhD research
+"""
+
 import xml.etree.ElementTree as ET
 import utm
 import pandas as pd
@@ -16,8 +25,14 @@ from collections import namedtuple
 from math import sqrt
 
 
-
 class track_segment:
+    """
+    Represents a railway track segment with nodes, coordinates, and properties.
+    
+    Contains information about track geometry, speed limits, and connectivity
+    for use in the camera localization pipeline.
+    """
+    
     def __init__(self, id, osm_id):
         """
         Initializes a track segment
@@ -59,8 +74,16 @@ class track_segment:
         axis.scatter(self.x_cors[0],self.y_cors[0],c=color)
         axis.scatter(self.x_cors[-1],self.y_cors[-1],c=color)
 
+
 # Node that defines tracks
 class track_node:
+    """
+    Represents a railway track node with coordinates and properties.
+    
+    Contains information about node geometry, position, and connectivity
+    for use in the camera localization pipeline.
+    """
+    
     def __init__(self,id,osm_id):
         self.id = id                # ID and index
         self.osm_id = osm_id        # OSM ID, not used
@@ -90,8 +113,16 @@ class track_node:
         self.y = u[1]
         self.zone = str(u[2]) + u[3]
 
+
 # Whole Map object
 class railway_map:
+    """
+    Represents the entire railway map with nodes, tracks, and transitions.
+    
+    Contains information about the railway network, including track geometry,
+    node connectivity, and transition segments.
+    """
+    
     def __init__(self,name):
         self.name = name                                # Name
         self.file = ""                                  # OSM Filename

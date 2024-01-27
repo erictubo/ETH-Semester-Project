@@ -1,3 +1,11 @@
+/**
+ * @file optimization.cc
+ * @brief Implements camera pose optimization and projection routines using Ceres Solver.
+ *
+ * Contains cost functors, projection utilities, and correspondence finding for camera localization.
+ * Depends on Eigen, Ceres, OpenCV, and Pybind11 for Python bindings.
+ */
+
 #include <iostream>
 #include <cmath>
 #include <limits>
@@ -16,8 +24,20 @@
 namespace py = pybind11;
 
 
+/**
+ * @brief Cost functor for camera projection residuals.
+ *
+ * Computes the reprojection error between a 3D GPS point and its observed 2D image location,
+ * given camera intrinsics and pose (translation + quaternion).
+ */
 struct CameraProjectionCostFunctor {
 
+    /**
+     * @brief Constructor for CameraProjectionCostFunctor.
+     * @param observed_2D_point The observed 2D image point.
+     * @param gps_3D_point The corresponding 3D GPS point in world coordinates.
+     * @param camera_intrinsics Pointer to camera intrinsics array [fx, fy, cx, cy].
+     */
     CameraProjectionCostFunctor(
         const Eigen::Vector2d observed_2D_point,
         const Eigen::Vector3d gps_3D_point,
@@ -27,6 +47,16 @@ struct CameraProjectionCostFunctor {
         gps_3D_point(gps_3D_point),
         camera_intrinsics(camera_intrinsics) {}
 
+    /**
+     * @brief Operator overload for Ceres automatic differentiation.
+     *
+     * Computes the residuals for the reprojection error.
+     *
+     * @tparam T Scalar type for automatic differentiation.
+     * @param camera_pose Camera pose parameters [tx, ty, tz, qw, qx, qy, qz].
+     * @param residuals Output residuals (2).
+     * @return true on success.
+     */
     template <typename T>
     bool operator()(const T* const camera_pose, T* residuals) const {
 
@@ -54,6 +84,13 @@ struct CameraProjectionCostFunctor {
         return true;
     }
 
+    /**
+     * @brief Factory method to create a Ceres cost function for this functor.
+     * @param observed_2D_point The observed 2D image point.
+     * @param gps_3D_point The corresponding 3D GPS point in world coordinates.
+     * @param camera_intrinsics Pointer to camera intrinsics array [fx, fy, cx, cy].
+     * @return Pointer to a new ceres::CostFunction.
+     */
     static ceres::CostFunction* Create(
         const Eigen::Vector2d observed_2D_point,
         const Eigen::Vector3d gps_3D_point,
@@ -67,12 +104,21 @@ struct CameraProjectionCostFunctor {
         }
     }
 
-    const Eigen::Vector2d observed_2D_point;
-    const Eigen::Vector3d gps_3D_point;
-    const double* camera_intrinsics;
+    const Eigen::Vector2d observed_2D_point; ///< Observed 2D image point
+    const Eigen::Vector3d gps_3D_point;      ///< Corresponding 3D GPS point
+    const double* camera_intrinsics;         ///< Camera intrinsics [fx, fy, cx, cy]
 };
 
 
+/**
+ * @brief Reprojects a 3D GPS point to 2D image coordinates.
+ *
+ * @param image Input image (for bounds checking).
+ * @param camera_intrinsics Camera intrinsics array [fx, fy, cx, cy].
+ * @param camera_pose Camera pose as [tx, ty, tz, qw, qx, qy, qz].
+ * @param gps_3D_point 3D point in world coordinates.
+ * @param reprojected_2D_point Output: 2D point in image coordinates.
+ */
 void ReprojectPoint(
     const cv::Mat& image,
     const double camera_intrinsics[4],
@@ -106,6 +152,15 @@ void ReprojectPoint(
 }
 
 
+/**
+ * @brief Reprojects multiple 3D GPS points to 2D image coordinates.
+ *
+ * @param image Input image (for bounds checking).
+ * @param camera_intrinsics Camera intrinsics array [fx, fy, cx, cy].
+ * @param camera_pose Camera pose as [tx, ty, tz, qw, qx, qy, qz].
+ * @param gps_3D_points Vector of 3D points in world coordinates.
+ * @param reprojected_2D_points Output: Vector of 2D points in image coordinates.
+ */
 void ReprojectPoints(
     const cv::Mat& image,
     const double camera_intrinsics[4],
@@ -122,6 +177,13 @@ void ReprojectPoints(
 }
 
 
+/**
+ * @brief Finds the closest reprojected 2D point to an observed 2D point.
+ *
+ * @param observed_2D_point The observed 2D image point.
+ * @param reprojected_2D_points List of candidate reprojected points.
+ * @param correspondence_index Output: Index of the closest reprojected point.
+ */
 void FindCorrespondence(
     const Eigen::Vector2d& observed_2D_point,
     const std::vector<Eigen::Vector2d>& reprojected_2D_points,
@@ -162,6 +224,15 @@ void FindCorrespondence(
 // }
 
 
+/**
+ * @brief Finds correspondences between observed and reprojected 2D points.
+ *
+ * For each observed point, finds the closest reprojected point. If multiple observed points are assigned to the same reprojected point, only the closest is kept.
+ *
+ * @param observed_2D_points Vector of observed 2D image points.
+ * @param reprojected_2D_points Vector of reprojected 2D points.
+ * @param correspondence_indices Output: Vector of indices of corresponding reprojected points (or -1 if no correspondence).
+ */
 void FindCorrespondences(
     const std::vector<Eigen::Vector2d>& observed_2D_points,
     const std::vector<Eigen::Vector2d>& reprojected_2D_points,
@@ -217,6 +288,14 @@ void FindCorrespondences(
 }
 
 
+/**
+ * @brief Draws correspondences between observed and reprojected 2D points on an image.
+ *
+ * @param correspondence_indices Indices of corresponding reprojected points for each observed point.
+ * @param observed_2D_points Vector of observed 2D image points.
+ * @param reprojected_2D_points Vector of reprojected 2D points.
+ * @param visualization Output image for visualization.
+ */
 void DrawCorrespondences(
     const std::vector<int>& correspondence_indices,
     const std::vector<Eigen::Vector2d>& observed_2D_points,
@@ -251,6 +330,15 @@ void DrawCorrespondences(
 }
 
 
+/**
+ * @brief Saves a visualization image to disk.
+ *
+ * @param visualization The image to save.
+ * @param filename The base filename.
+ * @param camera_id The camera identifier.
+ * @param iteration The optimization iteration number.
+ * @param visualization_path The directory to save the image in.
+ */
 void SaveVisualization(
     const cv::Mat& visualization,
     const std::string& filename,
@@ -263,7 +351,20 @@ void SaveVisualization(
 }
 
 
+/**
+ * @brief Struct representing a keyframe for optimization.
+ *
+ * Contains image, observed 2D points, and corresponding 3D GPS points.
+ */
 struct Keyframe {
+    /**
+     * @brief Constructor for Keyframe.
+     * @param filename The image filename.
+     * @param camera_id The camera identifier.
+     * @param image The image data.
+     * @param observed_2D_points Observed 2D image points.
+     * @param gps_3D_points Corresponding 3D GPS points.
+     */
     Keyframe(
         const std::string filename,
         const std::string camera_id,
@@ -276,15 +377,24 @@ struct Keyframe {
         observed_2D_points(observed_2D_points),
         gps_3D_points(gps_3D_points) {}
 
-    std::string filename;
-    std::string camera_id;
-    cv::Mat image;
-    std::vector<Eigen::Vector2d> observed_2D_points;
-    std::vector<Eigen::Vector3d> gps_3D_points;
+    std::string filename; ///< Image filename
+    std::string camera_id; ///< Camera identifier
+    cv::Mat image; ///< Image data
+    std::vector<Eigen::Vector2d> observed_2D_points; ///< Observed 2D image points
+    std::vector<Eigen::Vector3d> gps_3D_points; ///< Corresponding 3D GPS points
 };
 
 std::vector<Keyframe> keyframes;
 
+/**
+ * @brief Adds a keyframe to the global keyframe list.
+ *
+ * @param filename The image filename.
+ * @param camera_id The camera identifier.
+ * @param image The image data.
+ * @param observed_2D_points Observed 2D image points.
+ * @param gps_3D_points Corresponding 3D GPS points.
+ */
 void cpp_add_keyframe(
     const std::string filename,
     const std::string camera_id,
@@ -296,11 +406,22 @@ void cpp_add_keyframe(
     keyframes.push_back(keyframe);
 }
 
+/**
+ * @brief Clears all keyframes from the global keyframe list.
+ */
 void cpp_reset_keyframes() {
     keyframes.clear();
 }
 
 
+/**
+ * @brief Runs camera pose optimization over all keyframes.
+ *
+ * @param camera_pose Input/output: Camera pose [tx, ty, tz, qw, qx, qy, qz].
+ * @param camera_intrinsics Camera intrinsics [fx, fy, cx, cy].
+ * @param iterations Number of optimization iterations.
+ * @param visualization_path Directory to save visualizations.
+ */
 void cpp_update_camera_pose(
     double camera_pose[7],
     const double camera_intrinsics[4],
@@ -376,6 +497,17 @@ void cpp_update_camera_pose(
 }
 
 
+/**
+ * @brief Python binding: Adds a keyframe from Python.
+ *
+ * Converts Python types to C++ types and calls cpp_add_keyframe.
+ *
+ * @param filename The image filename (Python string).
+ * @param camera_id The camera identifier (Python string).
+ * @param image The image data (numpy array).
+ * @param observed_2D_points Observed 2D image points (numpy array).
+ * @param gps_3D_points Corresponding 3D GPS points (numpy array).
+ */
 void py_add_keyframe(
     py::str filename,
     py::str camera_id,
@@ -410,11 +542,25 @@ void py_add_keyframe(
 }
 
 
+/**
+ * @brief Python binding: Clears all keyframes from Python.
+ */
 void py_reset_keyframes() {
     cpp_reset_keyframes();
 }
 
 
+/**
+ * @brief Python binding: Runs camera pose optimization from Python.
+ *
+ * Converts Python types to C++ types, runs optimization, and returns the final camera pose as a numpy array.
+ *
+ * @param camera_pose Input/output: Camera pose (numpy array).
+ * @param camera_intrinsics Camera intrinsics (numpy array).
+ * @param iterations Number of optimization iterations.
+ * @param visualization_path Directory to save visualizations.
+ * @return Final camera pose as a numpy array.
+ */
 py::array py_update_camera_pose(
     py::array_t<double, py::array::c_style | py::array::forcecast> camera_pose,
     py::array_t<double, py::array::c_style | py::array::forcecast> camera_intrinsics,
@@ -453,6 +599,9 @@ py::array py_update_camera_pose(
 }
 
 
+/**
+ * @brief Pybind11 module definition for optimization.
+ */
 PYBIND11_MODULE(optimization, m) {
     m.doc() = "C++ camera pose optimization of combined keyframes using Ceres";
 

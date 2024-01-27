@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Central configuration for data paths and constants used throughout the pipeline.
+
+Defines locations for map, elevation, frame, and annotation data, as well as known parameters such as track width.
+Ensures required directory structure exists.
+"""
 
 import os
 import pandas as pd
 
 # Known constants
-track_width = 1.435
+track_width = 1.435  # Standard gauge width in meters
 # pole_height = 5.3
 
 # Folder containing all data
@@ -19,7 +25,7 @@ if not os.path.exists(path_to_elevation_data):
 # Railway map: nodes, tracks
 path_to_osm_file = path_to_data + "map/potsdam2.osm"
 
-# Pole locations
+# Pole locations (currently not used)
 # path_to_pole_location_data = str(path_to_data + 'poles.csv')
 # pole_location_dataframe = pd.DataFrame(pd.read_csv(path_to_pole_location_data), columns=['x', 'y'])
 
@@ -34,14 +40,13 @@ path_to_annotations_1 = path_to_frames + 'annotations_1/annotations.csv'
 
 railway_object_file = 'railway.pkl'
 
-# Visualization
+# Visualization output directories
 path_to_visualization = '/media/psf/visualization/'
 path_to_visualization_initial = path_to_visualization + 'initial/'
 path_to_visualization_optimization = path_to_visualization + 'optimization/'
 path_to_visualization_final = path_to_visualization + 'final/'
 
-
-# check that all visualization paths exist
+# Ensure all visualization paths exist
 for path in [path_to_visualization, path_to_visualization_initial, path_to_visualization_optimization, path_to_visualization_final]:
     if not os.path.exists(path):
         os.makedirs(path)

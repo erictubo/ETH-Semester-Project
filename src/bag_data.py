@@ -1,5 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Handles conversion of ROS bag data into synchronized frames for use in the camera localization pipeline.
+
+This module provides functionality to read images, GPS, and IMU data from ROS bags and export them 
+in a synchronized format suitable for further processing and annotation. It handles time synchronization,
+data extraction, and frame export for the camera localization pipeline.
+
+Classes:
+    BagData: Main class for reading and synchronizing ROS bag data.
+"""
 
 import os
 import yaml
@@ -29,6 +39,20 @@ ekf_gps_topic = '/ekf_gps'
 
 
 class BagData:
+    """
+    Handles reading and synchronizing data from ROS bag files for use in the pipeline.
+    
+    This class provides methods to extract GPS poses, images, and synchronize them for frame export.
+    It supports both GPS-only and GPS+camera bag configurations, with automatic time synchronization
+    and data format conversion.
+    
+    Attributes:
+        gps_bag: ROS Bag object for GPS data
+        camera_bag: ROS Bag object for camera data (optional)
+        gps_pose_topic: Topic name for GPS pose data
+        image_0_topic: Topic name for first camera image
+        image_1_topic: Topic name for second camera image
+    """
 
     def __init__(self,
                  path_to_bags: str,
@@ -38,7 +62,20 @@ class BagData:
                  image_0_topic: str = '/bas_usb_0/image_raw',
                  image_1_topic: str = '/bas_usb_1/image_raw',
                  ):
-
+        """
+        Initialize BagData with paths and topic names for GPS and camera bags.
+        
+        Args:
+            path_to_bags: Directory path containing ROS bag files
+            gps_bag_name: Name of the GPS bag file
+            camera_bag_name: Name of the camera bag file (optional)
+            gps_pose_topic: Topic name for GPS pose data (default: '/gps')
+            image_0_topic: Topic name for first camera image (default: '/bas_usb_0/image_raw')
+            image_1_topic: Topic name for second camera image (default: '/bas_usb_1/image_raw')
+            
+        Raises:
+            AssertionError: If specified topics are not found in the bags
+        """
         print('Initializing gps bag ...')
         self.gps_bag = Bag(path_to_bags + gps_bag_name, 'r')
         self.__init_more_bag_info__(self.gps_bag)
@@ -83,9 +120,21 @@ class BagData:
 
 
     def __init_more_bag_info__(self, bag: Bag):
-        '''
+        """
         Initializes additional useful information as bag attributes.
-        '''
+        
+        Args:
+            bag: ROS Bag object to initialize
+            
+        Note:
+            This method adds the following attributes to the bag object:
+            - start_time: Bag start time in seconds
+            - end_time: Bag end time in seconds
+            - topics: List of topic names
+            - types_by_topic: Dictionary mapping topics to message types
+            - counts_by_topic: Dictionary mapping topics to message counts
+            - freqs_by_topic: Dictionary mapping topics to message frequencies
+        """
         bag.start_time: float = bag.get_start_time()
         bag.end_time: float = bag.get_end_time()
 
@@ -104,20 +153,22 @@ class BagData:
 
 
     def __find_message_at_time__(self, bag: Bag, topic: str, time: float, freq_multiplier: int = 4):
-        '''
-        Finds message of selected topic that is closest to the given time.
-
-        Input:
-        - bag: ROS Bag
-        - topic: string of ROS topic name
-        - time: float
-        - freq_multiplier: int (used as a search region for the messages around the given time)
-
-        Return:
-        - message: ROS message
-        - found_time: float in seconds
-        - time_difference: float in seconds
-        '''
+        """
+        Finds the message of a selected topic closest to the given time.
+        
+        Args:
+            bag: ROS Bag object to search in
+            topic: Topic name to search for
+            time: Target time in seconds
+            freq_multiplier: Search window multiplier (default: 4)
+            
+        Returns:
+            tuple: (message, found_time, time_difference) or (None, None, None) if no message found
+            
+        Note:
+            The search window is calculated as freq_multiplier / (2 * topic_frequency) around the target time.
+            If the target time is outside the bag's time range, the entire bag is searched.
+        """
 
         # TODO: either set bag timestamps equal to message timestamps or find way to read through header stamps
 
@@ -159,15 +210,21 @@ class BagData:
 
 
     def find_gps_pose_at_time(self, time: float, output_type: str = 'numpy array'):
-        '''
-        Input:
-        - time: float in seconds
-        - output_type: string 'numpy array' or 'dictionary'
-
-        Output:
-        - pose_array or pose_dict (according to output_type)
-        - found_time: float in seconds
-        '''
+        """
+        Find the GPS pose closest to the given time.
+        
+        Args:
+            time: Target time in seconds
+            output_type: Output format - 'numpy array' (default) or 'dictionary'
+            
+        Returns:
+            tuple: (pose_data, found_time) where pose_data is either:
+                - numpy array of shape (7,) [x, y, z, qx, qy, qz, qw] if output_type='numpy array'
+                - dictionary with keys ['p_x', 'p_y', 'p_z', 'q_x', 'q_y', 'q_z', 'q_w', 'time'] if output_type='dictionary'
+                
+        Raises:
+            NotImplementedError: If GPS pose message type is not supported
+        """
 
         msg, found_time, time_diff = self.__find_message_at_time__(self.gps_bag, self.gps_pose_topic, time)
 
@@ -201,6 +258,21 @@ class BagData:
         
     
     def convert_image_msg_to_cv2(self, msg: Image) -> np.ndarray:
+        """
+        Convert ROS Image message to OpenCV format.
+        
+        Args:
+            msg: ROS Image message
+            
+        Returns:
+            OpenCV image as numpy array in BGR format
+            
+        Raises:
+            AssertionError: If image encoding is not 'bayer_rggb8'
+            
+        Note:
+            Currently only supports 'bayer_rggb8' encoding with Bayer to BGR conversion.
+        """
 
         # msg.encoding      : string    # Encoding of pixels -- channel meaning, ordering, size
         # msg.height        : uint32    # image height, that is, number of rows
@@ -217,16 +289,19 @@ class BagData:
 
         
     def find_images_at_time(self, time: float):
-        '''
-        Input:
-        - time: float in seconds
-
-        Output:
-        - image_0: numpy array
-        - image_1: numpy array
-        - found_time_0: float in seconds
-        - found_time_1: float in seconds
-        '''
+        """
+        Find stereo camera images closest to the given time.
+        
+        Args:
+            time: Target time in seconds
+            
+        Returns:
+            tuple: (image_0, image_1, found_time_0, found_time_1) where:
+                - image_0: First camera image as numpy array
+                - image_1: Second camera image as numpy array  
+                - found_time_0: Actual time of first image in seconds
+                - found_time_1: Actual time of second image in seconds
+        """
 
         msg_0, found_time_0, time_diff_0 = self.__find_message_at_time__(self.camera_bag, self.image_0_topic, time)
         msg_1, found_time_1, time_diff_1 = self.__find_message_at_time__(self.camera_bag, self.image_1_topic, time)
@@ -238,6 +313,22 @@ class BagData:
     
 
     def find_gps_pose_and_images_at_time(self, time: float, pose_output_type: str = 'numpy array'):
+        """
+        Find synchronized GPS pose and stereo images at the given time.
+        
+        Args:
+            time: Target time in seconds
+            pose_output_type: GPS pose output format - 'numpy array' (default) or 'dictionary'
+            
+        Returns:
+            tuple: (pose, image_0, image_1, found_time_pose, found_time_image_0, found_time_image_1) where:
+                - pose: GPS pose data in specified format
+                - image_0: First camera image as numpy array
+                - image_1: Second camera image as numpy array
+                - found_time_pose: Actual time of GPS pose in seconds
+                - found_time_image_0: Actual time of first image in seconds
+                - found_time_image_1: Actual time of second image in seconds
+        """
 
         pose, found_time_pose = self.find_gps_pose_at_time(time, pose_output_type)
         image_0, image_1, found_time_image_0, found_time_image_1 = self.find_images_at_time(time)
@@ -246,6 +337,26 @@ class BagData:
     
 
     def export_frame(self, path_to_frames: str, time: float, name: str = None, print_info: bool = True):
+        """
+        Export a single synchronized frame with GPS pose and stereo images.
+        
+        Args:
+            path_to_frames: Directory path to export frames to
+            time: Target time in seconds
+            name: Frame name (optional, defaults to time string)
+            print_info: Whether to print export information (default: True)
+            
+        Note:
+            Creates the following directory structure if it doesn't exist:
+            - path_to_frames/images_0/ (first camera images)
+            - path_to_frames/images_1/ (second camera images)  
+            - path_to_frames/poses/ (GPS pose data)
+            
+            Exports:
+            - GPS pose as YAML file: poses/{name}.yaml
+            - First camera image as JPG: images_0/{name}.jpg
+            - Second camera image as JPG: images_1/{name}.jpg
+        """
 
         path_to_images_0 = path_to_frames + 'images_0/'
         path_to_images_1 = path_to_frames + 'images_1/'
@@ -279,6 +390,21 @@ class BagData:
 
 
     def export_frames(self, path_to_frames: str, times: list[float], names: list[str] = None, print_info: bool = True):
+        """
+        Export multiple synchronized frames with GPS poses and stereo images.
+        
+        Args:
+            path_to_frames: Directory path to export frames to
+            times: List of target times in seconds
+            names: List of frame names (optional, must match length of times)
+            print_info: Whether to print export information (default: True)
+            
+        Raises:
+            AssertionError: If names is provided but has different length than times
+            
+        Note:
+            Calls export_frame() for each time in the times list.
+        """
 
         if names:
             assert len(times) == len(names), print('times and names must have the same length')

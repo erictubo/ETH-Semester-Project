@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
+Defines Frame and Keyframe classes for representing frames and keyframes in the camera localization pipeline.
+
+Frame contains basic information (ID, GPS data) and is used for dense mapping
+Keyframe is a more sophisticated object containing images, associated cameras, GPS, and annotations – used for optimization and evaluation.
+"""
 
 import numpy as np
 import cv2
@@ -20,15 +26,16 @@ if TYPE_CHECKING:
 
 class Frame:
     """
-    Initialise basic Frame objects to create processed Railway object.
-    - ID
-    - filename
-    - distorted_image
-    - gps_pose
-    - GPS
+    Represents a basic frame with ID, filename, GPS pose, and GPS object.
+    Used for creating processed Railway objects.
     """
-
     def __init__(self, id: int, include_elevation=True):
+        """
+        Initialize a Frame object.
+        Args:
+            id: Frame ID (int).
+            include_elevation: Whether to include elevation data (default: True).
+        """
         self.id = id
         self.filename = self.__get_filename__()
         self.gps_pose = self.__get_gps_pose__()
@@ -36,6 +43,13 @@ class Frame:
         self.gps = GPS(self.gps_pose, include_elevation)
 
     def __get_filename__(self, digits = 6) -> str:
+        """
+        Generate a zero-padded filename string from the frame ID.
+        Args:
+            digits: Number of digits for zero-padding (default: 6).
+        Returns:
+            Zero-padded filename string.
+        """
         assert isinstance(self.id, int)
         assert len(str(self.id)) <= digits
         zeros = (digits - len(str(self.id))) * "0"
@@ -43,6 +57,11 @@ class Frame:
         return filename
 
     def __get_gps_pose__(self):
+        """
+        Load the GPS pose for this frame from a YAML file.
+        Returns:
+            Dictionary with GPS pose data.
+        """
         pose_path = path_to_poses + str(self.filename) + '.yaml'
         with open(pose_path, 'r') as stream: gps_pose = yaml.safe_load(stream)
         return gps_pose
@@ -50,23 +69,21 @@ class Frame:
 
 class Keyframe(Frame):
     """
-    Initialise more sophisticated Keyframe objects after having processed a Railway object.
-    - ID
-    - filename
-    - distorted_image
-    - gps_pose
-    - GPS: with local points in tracks
-        - GPS.local_tracks
-        - GPS.local_points_in_tracks
-    - Camera
-    - image
-    - Annotations
+    Represents a keyframe with images, cameras, GPS, and annotations.
+    Used for optimization and evaluation after processing a Railway object.
     """
 
     def __init__(self, id: int, camera_0: 'Camera', camera_1: 'Camera', railway: 'Railway', distorted_annotation: bool = True):
-
+        """
+        Initialize a Keyframe object.
+        Args:
+            id: Keyframe ID (int).
+            camera_0: Camera object for camera 0.
+            camera_1: Camera object for camera 1.
+            railway: Railway object for local track information.
+            distorted_annotation: Whether to undistort annotation points (default: True).
+        """
         super().__init__(id=id, include_elevation=True)
-
         self.camera_0 = camera_0
         self.camera_1 = camera_1
 
@@ -94,6 +111,13 @@ class Keyframe(Frame):
         # self.points_gps_arrays = [self.points_gps_array_0, self.points_gps_array_1]
     
     def __get_image__(self, camera: 'Camera'):
+        """
+        Load the image for this keyframe and camera.
+        Args:
+            camera: Camera object.
+        Returns:
+            Image as a numpy array.
+        """
         if camera.id == 0:
             path_to_images = path_to_images_0
         elif camera.id == 1:
@@ -107,13 +131,19 @@ class Keyframe(Frame):
                                      filter_by_camera_angle=True, filter_angle=0.004,
                                      separate_left_right=True):
         """
-        - Processing of local points
-            - interpolate (default: True) with options for spacing and smoothing
-            - filter_by_camera_angle (default: True), with option for filter_angle
-            - separate_left_right tracks (default: True)
-        - Output:
-            - single array of points (default "single array") -- simple points used for optimisation
-            - list of tracks with points ("separate lists") -- better for distinguishing tracks
+        Process local GPS points for this keyframe and camera.
+        Args:
+            camera: Camera object.
+            interpolate: Whether to interpolate points (default: True).
+            int_spacing: Interpolation spacing (default: 0.05).
+            int_smoothing: Interpolation smoothing (default: 0.1).
+            filter_by_camera_angle: Whether to filter by camera angle (default: True).
+            filter_angle: Angle threshold for filtering (default: 0.004).
+            separate_left_right: Whether to separate left/right tracks (default: True).
+        Returns:
+            Tuple (points_gps_array, points_gps_list):
+                points_gps_array: Array of all points in the GPS frame - simple points for optimization
+                points_gps_list: List of lists of points in the GPS frame - better for distinguishing tracks (for visualization)
         """
 
         points_gps_array = np.empty((0,3))
@@ -166,7 +196,13 @@ class Keyframe(Frame):
 
     def visualize_reprojected_points(self, camera: 'Camera', visual: np.ndarray=None, color: tuple=(0,0,255)):
         """
-        Set color to "random" to get a different color for each track
+        Visualize reprojected GPS points for this keyframe and camera.
+        Args:
+            camera: Camera object.
+            visual: Optional image to draw on.
+            color: Color for the points (default: red). Set to "random" to get a different color for each track.
+        Returns:
+            Image with reprojected points drawn.
         """
         if camera.id == 0:
             if visual is None:
@@ -188,6 +224,15 @@ class Keyframe(Frame):
         
 
     def visualize_original_points(self, camera: 'Camera', visual: np.ndarray=None, color: tuple=(0,255,255)):
+        """
+        Visualize original (unprocessed) GPS points for this keyframe and camera.
+        Args:
+            camera: Camera object.
+            visual: Optional image to draw on.
+            color: Color for the points (default: yellow).
+        Returns:
+            Image with original points drawn.
+        """
         if visual is None:
             if camera.id == 0:
                 visual = self.image_0.copy()
@@ -202,6 +247,17 @@ class Keyframe(Frame):
         return visual
     
     def visualize_reprojected_and_original_points(self, camera: 'Camera', visual: np.ndarray=None, colors: list[tuple]=[(0,0,255), (0,255,255)]):
+        """
+        Visualize both reprojected and original GPS points for this keyframe and camera.
+        
+        Args:
+            camera: Camera object.
+            visual: Optional image to draw on.
+            colors: List of two colors for reprojected and original points (default: [blue, yellow]).
+            
+        Returns:
+            Image with both reprojected and original points drawn.
+        """
         visual = self.visualize_reprojected_points(camera, visual, colors[0])
         visual = self.visualize_original_points(camera, visual, colors[1])
         return visual
