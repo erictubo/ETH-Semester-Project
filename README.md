@@ -1,4 +1,4 @@
-# Multi-Frame Extrinsics Optimization
+# Semester Project: Optimization-based Camera Localization using Map Information
 
 [Report](Report.pdf) | [Presentation](Presentation.pdf)
 
@@ -12,7 +12,7 @@ Moreover, in contrast to single-frame, multi-frame optimization has been somewha
 
 ## Input Data
 
-Store the relevant input data locally and specific the paths in [data.py](src/data.py). The current structure uses `path_to_data` as the root directory, which contains the subdirectories `map`, `elevation`, and `frames`. The latter contains the subdirectories `frames/poses`, `frames/images`, and `frames/annotations` (the last two for each camera separately).
+Store the relevant input data locally and specify the paths in [data.py](src/data.py). The current structure uses `path_to_data` as the root directory, which contains the subdirectories `map`, `elevation`, and `frames`. The latter contains the subdirectories `frames/poses`, `frames/images`, and `frames/annotations` (the last two for each camera separately).
 
 ### Elevation
 
