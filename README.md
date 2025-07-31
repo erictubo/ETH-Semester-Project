@@ -1,4 +1,4 @@
-# Optimization-based Camera Localization using Map Information
+# Online Extrinsic Camera Calibration using Map Information
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/) [![C++ 17](https://img.shields.io/badge/c++-17-blue.svg)](https://en.wikipedia.org/wiki/C%2B%2B#Standardization)
 
